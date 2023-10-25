@@ -2,5 +2,9 @@
   {
     "title": "Test Quiz",
     "link": "testquiz.html"
+  },
+  {
+    "title": "Dates of History",
+    "link": "randomdatesquiz.html"
   }
 ]

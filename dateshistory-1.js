@@ -1,18 +1,18 @@
 const questions = [
     {
-        question: "What is the capital of France?",
-        choices: ["Paris", "London", "Berlin"],
-        correct: 1,
-    },
-    {
-        question: "Which planet is known as the Red Planet?",
-        choices: ["Venus", "Mars", "Jupiter"],
-        correct: 1,
-    },
-    {
-        question: "How many continents are there?",
-        choices: ["5", "6", "7"],
+        question: "When was the atomic bomb dropped on Heroshima?",
+        choices: ["12/07/2045", "10/31/2023", "8/06/1945"],
         correct: 2,
+    },
+    {
+        question: "Year that the USSR collapsed",
+        choices: ["1998", "1991", "1989"],
+        correct: 1,
+    },
+    {
+        question: "Year the moon landing happened?",
+        choices: ["1969", "2007", "Never"],
+        correct: 0,
     },
 ];
 

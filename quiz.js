@@ -2,7 +2,7 @@ const questions = [
     {
         question: "What is the capital of France?",
         choices: ["Paris", "London", "Berlin"],
-        correct: 0,
+        correct: 1,
     },
     {
         question: "Which planet is known as the Red Planet?",

@@ -1,0 +1,27 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+.container {
+    margin: 0 auto;
+    width: 60%;
+}
+
+.choices {
+    display: flex;
+    flex-direction: column;
+}
+
+.btn {
+    margin: 10px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#score {
+    font-size: 20px;
+    font-weight: bold;
+}
+

@@ -44,8 +44,12 @@ function checkAnswer(choice) {
         score++;
     }
 
-    currentQuestion++;
-    displayQuestion();
+    if (currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        displayQuestion();
+    } else {
+        endGame();
+    }
 }
 
 function endGame() {

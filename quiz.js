@@ -32,6 +32,9 @@ function displayQuestion() {
             const button = document.createElement("button");
             button.textContent = current.choices[i];
             button.className = "btn";
+            button.addEventListener("click", function() {
+                checkAnswer(i);
+            });
             choicesElement.appendChild(button);
         }
     } else {
@@ -44,12 +47,8 @@ function checkAnswer(choice) {
         score++;
     }
 
-    if (currentQuestion < questions.length - 1) {
-        currentQuestion++;
-        displayQuestion();
-    } else {
-        endGame();
-    }
+    currentQuestion++;
+    displayQuestion();
 }
 
 function endGame() {

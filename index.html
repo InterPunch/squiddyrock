@@ -1,14 +1,139 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Quiz Game Home</title>
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interpunch Games</title>
+    <style>
+      /* Reset CSS */
+      * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+      }
+
+      /* Global Styles */
+      body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background-color: #171717;
+          color: #fff;
+          line-height: 1.6;
+          margin: 0;
+          padding: 0;
+      }
+
+      /* Header Styles */
+      header {
+          background-color: #111;
+          padding: 20px;
+          text-align: center;
+      }
+
+      header h1 {
+          margin: 0;
+          font-size: 3em;
+          color: #fff;
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Navigation Styles */
+      nav {
+          background-color: #222;
+          padding: 10px;
+          text-align: center;
+      }
+
+      nav a {
+          color: #fff;
+          text-decoration: none;
+          padding: 10px 20px;
+          margin: 0 5px;
+          border-radius: 20px;
+          transition: background-color 0.3s ease;
+      }
+
+      nav a:hover {
+          background-color: #333;
+      }
+
+      /* Section Styles */
+      section {
+          padding: 20px;
+          margin: 20px;
+          background-color: #333;
+          border-radius: 10px;
+          box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      }
+
+      section h2 {
+          color: #fff;
+          margin-bottom: 10px;
+          text-align: center;
+          font-size: 2em;
+          text-transform: uppercase;
+      }
+
+      section p {
+          color: #bbb;
+          margin-bottom: 20px;
+          text-align: center;
+          font-size: 1.2em;
+      }
+
+      section ul {
+          list-style-type: none;
+          padding: 0;
+          text-align: center;
+      }
+
+      section li {
+          margin-bottom: 10px;
+          font-size: 1.2em;
+      }
+
+      /* Footer Styles */
+      footer {
+          background-color: #111;
+          color: #fff;
+          text-align: center;
+          padding: 20px;
+          position: fixed;
+          bottom: 0;
+          width: 100%;
+          font-size: 1.2em;
+      }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome to the Quiz Game</h1>
-        <p>Test your knowledge and have fun!</p>
-        <a href="quiz-browser.html" class="start-button">Browse for a Quiz</a>
-    </div>
+    <header>
+        <h1>Interpunch Games</h1>
+    </header>
+    <nav>
+        <a href="#about">About</a>
+        <a href="#games">Games</a>
+        <a href="#contact">Contact</a>
+    </nav>
+    <section id="about">
+        <h2>About Us</h2>
+        <p>Welcome to Interpunch Games! We are a passionate team of game developers dedicated to creating immersive gaming experiences.</p>
+        <p>Founded in 2023 Interpunch Games is working on creating more great experiences for our fans. We are working on our new game curently and we are so eager to share it! Check out our Discord and Youtube for updates to our games and chat with the community!</p>
+    </section>
+    <section id="games">
+        <h2>Our Games</h2>
+        <p>Check out our latest games:</p>
+        <ul>
+            <li>You are the weapon!</li>
+            <li>COMING SOON</li>
+            <!-- Add more games as needed -->
+        </ul>
+    </section>
+    <section id="contact">
+        <h2>Contact Us</h2>
+        <p>Have a question or feedback? Reach out to us!</p>
+        <p>Email: info.interpunchgames@gmail.com</p>
+    </section>
+    <footer>
+        &copy; 2024 Interpunch Games
+    </footer>
 </body>
 </html>

@@ -3,6 +3,44 @@
 
 const STORAGE_KEY = 'netflix_clone_library_v2';  // bumped to clear any old demo data
 const CONTINUE_KEY = 'netflix_clone_continue_v2';
+const SPOTIFY_KEY = 'netflix_clone_spotify_v1';
+
+// ===== PASSWORD GATE =====
+// Change this password to whatever you want
+const APP_PASSWORD = 'netflix123';
+
+function checkLogin() {
+  // Stay logged in for the browser session
+  if (sessionStorage.getItem('netflix_unlocked') === '1') {
+    unlockApp();
+    return;
+  }
+  // Show login screen (already visible by default)
+  document.getElementById('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('passwordInput').value;
+    if (input === APP_PASSWORD) {
+      sessionStorage.setItem('netflix_unlocked', '1');
+      unlockApp();
+    } else {
+      const err = document.getElementById('loginError');
+      err.classList.remove('hidden');
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('passwordInput').focus();
+    }
+  });
+  // Focus the password field
+  setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+}
+
+function unlockApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  const app = document.getElementById('app');
+  app.classList.remove('app-hidden');
+  app.classList.add('app-visible');
+  // Now start the real app
+  initApp();
+}
 
 // No demo/starter content — library starts empty
 let library = [];
@@ -113,8 +151,10 @@ function createPosterElement(item) {
   if (item.badge) {
     const badge = document.createElement('span');
     badge.className = 'badge';
-    if (item.badge.toLowerCase().includes('leaving')) badge.classList.add('leaving');
-    if (item.badge.toLowerCase().includes('new') || item.badge.toLowerCase().includes('recently')) badge.classList.add('new');
+    const b = item.badge.toLowerCase();
+    if (b.includes('leaving')) badge.classList.add('leaving');
+    if (b.includes('new') || b.includes('recently')) badge.classList.add('new');
+    if (b.includes('online')) badge.classList.add('online');
     badge.textContent = item.badge;
     div.appendChild(badge);
   }
@@ -194,8 +234,12 @@ function showSection(section) {
     openPanel('uploadPanel');
   } else if (section === 'youtube') {
     openPanel('youtubePanel');
+  } else if (section === 'spotify') {
+    document.getElementById('spotify-row')?.scrollIntoView({ behavior: 'smooth' });
+    document.querySelectorAll('.nav-links li').forEach(li => {
+      li.classList.toggle('active', li.dataset.section === 'spotify');
+    });
   } else {
-    // Just highlight nav
     document.querySelectorAll('.nav-links li').forEach(li => {
       li.classList.toggle('active', li.dataset.section === section);
     });
@@ -212,6 +256,9 @@ document.querySelectorAll('.nav-links li').forEach(li => {
 // ===== Panels =====
 function openPanel(id) {
   document.getElementById(id).classList.add('open');
+  if (id === 'uploadPanel') {
+    populateSeriesDropdown();
+  }
 }
 
 function closePanel(id) {
@@ -225,8 +272,27 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    if (tab.dataset.tab === 'episode') {
+      populateSeriesDropdown();
+    }
   });
 });
+
+function populateSeriesDropdown() {
+  const select = document.getElementById('episodeSeries');
+  if (!select) return;
+  const seriesList = library.filter(i => i.type === 'series');
+  select.innerHTML = '<option value="">-- Choose a series --</option>';
+  seriesList.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    const epCount = (s.episodes || []).length;
+    opt.textContent = `${s.title} (${epCount} episode${epCount !== 1 ? 's' : ''})`;
+    select.appendChild(opt);
+  });
+  const hint = document.getElementById('noSeriesHint');
+  if (hint) hint.style.display = seriesList.length === 0 ? 'block' : 'none';
+}
 
 // ===== File helpers =====
 function readFileAsDataURL(file) {
@@ -242,11 +308,10 @@ function generateId() {
   return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
 }
 
-// ===== Upload Video =====
+// ===== Upload Video (standalone) =====
 document.getElementById('uploadForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const title = document.getElementById('uploadTitle').value.trim();
-  const type = document.getElementById('uploadType').value;
   const desc = document.getElementById('uploadDesc').value.trim();
   const posterFile = document.getElementById('uploadPoster').files[0];
   const videoFile = document.getElementById('uploadVideo').files[0];
@@ -280,7 +345,7 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     const item = {
       id,
       title,
-      type,
+      type: 'movie',
       desc: desc || 'User uploaded video',
       poster: posterData,
       badge: 'My Upload',
@@ -305,6 +370,84 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
   } catch (err) {
     console.error(err);
     showToast('Upload failed: ' + err.message);
+    progressEl.classList.add('hidden');
+  }
+});
+
+// ===== Add Episode to Series =====
+document.getElementById('episodeForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const seriesId = document.getElementById('episodeSeries').value;
+  const season = parseInt(document.getElementById('episodeSeason').value) || 1;
+  const epNum = parseInt(document.getElementById('episodeNumber').value) || 1;
+  const title = document.getElementById('episodeTitle').value.trim();
+  const desc = document.getElementById('episodeDesc').value.trim();
+  const videoFile = document.getElementById('episodeVideo').files[0];
+
+  if (!seriesId) {
+    showToast('Please select a series');
+    return;
+  }
+  if (!title || !videoFile) {
+    showToast('Episode title and video file are required');
+    return;
+  }
+
+  const series = library.find(i => i.id === seriesId);
+  if (!series) {
+    showToast('Series not found');
+    return;
+  }
+
+  const progressEl = document.getElementById('episodeProgress');
+  const bar = document.getElementById('episodeProgressBar');
+  const text = document.getElementById('episodeProgressText');
+  progressEl.classList.remove('hidden');
+  bar.style.width = '20%';
+  text.textContent = 'Saving episode...';
+
+  try {
+    const id = generateId();
+    await saveVideoBlob(id, videoFile);
+    bar.style.width = '70%';
+
+    if (!series.episodes) series.episodes = [];
+
+    const episode = {
+      id,
+      title,
+      desc: desc || `S${season}E${epNum}`,
+      season,
+      episode: epNum,
+      hasVideo: true,
+      createdAt: Date.now()
+    };
+
+    series.episodes.push(episode);
+    // Sort by season then episode
+    series.episodes.sort((a, b) => (a.season - b.season) || (a.episode - b.episode));
+
+    // Update series badge to show episode count
+    series.badge = `${series.episodes.length} Ep`;
+
+    saveLibrary();
+    renderRows();
+    populateSeriesDropdown();
+
+    bar.style.width = '100%';
+    text.textContent = 'Done!';
+    showToast(`"${title}" added to ${series.title} (S${season}E${epNum})`);
+
+    setTimeout(() => {
+      progressEl.classList.add('hidden');
+      document.getElementById('episodeForm').reset();
+      document.getElementById('episodeSeason').value = 1;
+      document.getElementById('episodeNumber').value = 1;
+      closePanel('uploadPanel');
+    }, 800);
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to add episode: ' + err.message);
     progressEl.classList.add('hidden');
   }
 });
@@ -417,11 +560,12 @@ function pullFromYouTube() {
     id: 'yt-' + videoId,
     title,
     type,
-    desc: 'Pulled from YouTube',
+    desc: 'Online Only — streams from YouTube when you play it. No file is saved to your computer.',
     poster: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-    badge: 'YouTube',
+    badge: 'Online Only',
     source: 'youtube',
     youtubeId: videoId,
+    onlineOnly: true,
     createdAt: Date.now()
   };
 
@@ -441,7 +585,7 @@ function pullFromYouTube() {
   embed.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`;
   preview.classList.remove('hidden');
 
-  showToast(`"${title}" added from YouTube`);
+  showToast(`"${title}" added (Online Only)`);
   document.getElementById('ytUrl').value = '';
   document.getElementById('ytTitle').value = '';
 }
@@ -450,24 +594,71 @@ function pullFromYouTube() {
 function openDetail(item) {
   currentDetail = item;
   document.getElementById('detailTitle').textContent = item.title;
-  document.getElementById('detailMeta').textContent =
-    `${item.type?.toUpperCase() || 'VIDEO'} • ${item.source === 'youtube' ? 'YouTube' : item.source === 'upload' ? 'Uploaded' : 'Library'}`;
+
+  let meta = `${(item.type || 'video').toUpperCase()}`;
+  if (item.type === 'series') {
+    const epCount = (item.episodes || []).length;
+    meta += ` • ${item.seasons || 1} Season${(item.seasons || 1) > 1 ? 's' : ''} • ${epCount} Episode${epCount !== 1 ? 's' : ''}`;
+  } else if (item.source === 'youtube') {
+    meta += ' • YouTube';
+  } else if (item.source === 'upload' || item.source === 'created') {
+    meta += ' • Your Library';
+  }
+  document.getElementById('detailMeta').textContent = meta;
   document.getElementById('detailDesc').textContent = item.desc || 'No description.';
 
   const posterEl = document.getElementById('detailPoster');
   posterEl.innerHTML = '';
+  posterEl.style = '';
   if (item.poster) {
     const img = document.createElement('img');
     img.src = item.poster;
     posterEl.appendChild(img);
   } else {
     posterEl.style.background = '#333';
-    posterEl.textContent = item.title;
     posterEl.style.display = 'flex';
     posterEl.style.alignItems = 'center';
     posterEl.style.justifyContent = 'center';
     posterEl.style.padding = '20px';
     posterEl.style.textAlign = 'center';
+    posterEl.textContent = item.title;
+  }
+
+  // Episodes list for series
+  const epList = document.getElementById('episodesList');
+  const playBtn = document.getElementById('detailPlayBtn');
+  epList.innerHTML = '';
+  epList.classList.add('hidden');
+
+  if (item.type === 'series') {
+    playBtn.style.display = 'none'; // series itself has no single video
+    const episodes = item.episodes || [];
+    if (episodes.length > 0) {
+      epList.classList.remove('hidden');
+      epList.innerHTML = '<h3>Episodes</h3>';
+      episodes.forEach(ep => {
+        const row = document.createElement('div');
+        row.className = 'episode-item';
+        row.innerHTML = `
+          <div class="ep-info">
+            <span class="ep-num">S${ep.season} E${ep.episode}</span>
+            <span class="ep-title">${ep.title}</span>
+          </div>
+          <button class="ep-play">▶ Play</button>
+        `;
+        row.querySelector('.ep-play').addEventListener('click', (e) => {
+          e.stopPropagation();
+          playEpisode(item, ep);
+        });
+        row.addEventListener('click', () => playEpisode(item, ep));
+        epList.appendChild(row);
+      });
+    } else {
+      epList.classList.remove('hidden');
+      epList.innerHTML = '<h3>Episodes</h3><p style="color:#888;font-size:0.9rem;">No episodes yet. Use “Add to Series” to upload videos.</p>';
+    }
+  } else {
+    playBtn.style.display = '';
   }
 
   document.getElementById('detailModal').classList.add('open');
@@ -480,8 +671,32 @@ function closeDetail() {
 
 async function playFromDetail() {
   if (!currentDetail) return;
-  await playItem(currentDetail);
+  // If series with episodes, play first episode
+  if (currentDetail.type === 'series' && currentDetail.episodes && currentDetail.episodes.length) {
+    await playEpisode(currentDetail, currentDetail.episodes[0]);
+  } else {
+    await playItem(currentDetail);
+  }
   closeDetail();
+}
+
+async function playEpisode(series, episode) {
+  closeDetail();
+  // Play the episode video using its own id
+  const playable = {
+    id: episode.id,
+    title: `${series.title} – S${episode.season}E${episode.episode}: ${episode.title}`,
+    desc: episode.desc || series.desc,
+    hasVideo: true,
+    source: 'upload'
+  };
+  await playItem(playable);
+  // Also mark the series in continue watching
+  if (!continueWatching.includes(series.id)) {
+    continueWatching.unshift(series.id);
+    if (continueWatching.length > 12) continueWatching.pop();
+    saveContinue();
+  }
 }
 
 async function playItem(item) {
@@ -508,12 +723,11 @@ async function playItem(item) {
       wrapper.innerHTML = '<p style="color:#aaa;padding:40px;text-align:center;">Video file not found in storage.</p>';
     }
   } else {
-    // Starter content – no real video
     wrapper.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#aaa;gap:12px;">
         <div style="font-size:3rem;">▶</div>
-        <p>Demo title – no video file attached.</p>
-        <p style="font-size:0.85rem;">Upload your own videos or pull from YouTube to play real content.</p>
+        <p>No video file attached.</p>
+        <p style="font-size:0.85rem;">Upload a video or pull from YouTube to play real content.</p>
       </div>`;
   }
 
@@ -523,9 +737,12 @@ async function playItem(item) {
     if (continueWatching.length > 12) continueWatching.pop();
     saveContinue();
   }
-  // Fake progress
-  item.progress = Math.min(95, (item.progress || 0) + 15);
-  saveLibrary();
+  // Fake progress on the item if it exists in library
+  const libItem = library.find(i => i.id === item.id);
+  if (libItem) {
+    libItem.progress = Math.min(95, (libItem.progress || 0) + 15);
+    saveLibrary();
+  }
   renderRows();
 
   document.getElementById('playerModal').classList.add('open');
@@ -577,22 +794,119 @@ function showToast(msg) {
   setTimeout(() => t.classList.add('hidden'), 2800);
 }
 
+// ===== Spotify =====
+let spotifyItems = [];
+
+function loadSpotify() {
+  try {
+    const raw = localStorage.getItem(SPOTIFY_KEY);
+    spotifyItems = raw ? JSON.parse(raw) : [];
+  } catch {
+    spotifyItems = [];
+  }
+}
+
+function saveSpotify() {
+  localStorage.setItem(SPOTIFY_KEY, JSON.stringify(spotifyItems));
+}
+
+function extractSpotifyEmbed(url) {
+  // Supports track, album, playlist, episode, show
+  // https://open.spotify.com/track/xxx
+  // https://open.spotify.com/playlist/xxx
+  // https://open.spotify.com/album/xxx
+  const match = url.match(/open\.spotify\.com\/(track|album|playlist|episode|show)\/([a-zA-Z0-9]+)/);
+  if (!match) return null;
+  const type = match[1];
+  const id = match[2];
+  // Compact height for tracks, taller for playlists/albums
+  const height = (type === 'track' || type === 'episode') ? 152 : 352;
+  return {
+    type,
+    id,
+    embedUrl: `https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0`,
+    height
+  };
+}
+
+function addSpotify() {
+  const raw = document.getElementById('spotifyUrl').value.trim();
+  if (!raw) {
+    showToast('Paste a Spotify link first');
+    return;
+  }
+  const parsed = extractSpotifyEmbed(raw);
+  if (!parsed) {
+    showToast('Invalid Spotify link. Use open.spotify.com track/album/playlist URLs.');
+    return;
+  }
+  // Avoid duplicates
+  if (spotifyItems.some(s => s.id === parsed.id && s.type === parsed.type)) {
+    showToast('Already in your Spotify list');
+    return;
+  }
+  spotifyItems.unshift({
+    ...parsed,
+    originalUrl: raw,
+    addedAt: Date.now()
+  });
+  saveSpotify();
+  renderSpotify();
+  document.getElementById('spotifyUrl').value = '';
+  showToast('Added to Spotify section');
+}
+
+function removeSpotify(id, type) {
+  spotifyItems = spotifyItems.filter(s => !(s.id === id && s.type === type));
+  saveSpotify();
+  renderSpotify();
+  showToast('Removed');
+}
+
+function renderSpotify() {
+  const list = document.getElementById('spotifyList');
+  if (!list) return;
+  list.innerHTML = '';
+  if (spotifyItems.length === 0) {
+    list.innerHTML = '<div class="spotify-empty">No Spotify items yet. Paste a track, album, or playlist link above.</div>';
+    return;
+  }
+  spotifyItems.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'spotify-card';
+    card.innerHTML = `
+      <button class="spotify-remove" title="Remove">×</button>
+      <iframe style="border-radius:8px" src="${item.embedUrl}" width="100%" height="${item.height}" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    `;
+    card.querySelector('.spotify-remove').addEventListener('click', () => removeSpotify(item.id, item.type));
+    list.appendChild(card);
+  });
+}
+
 // ===== Navbar scroll =====
 window.addEventListener('scroll', () => {
   document.querySelector('.navbar').classList.toggle('scrolled', window.scrollY > 40);
 });
 
 // ===== Init =====
-async function init() {
+async function initApp() {
   await initDB();
   loadLibrary();
   loadContinue();
+  loadSpotify();
   renderRows();
+  renderSpotify();
 
   // Make logo clickable
   document.querySelector('.logo').addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+
+  // Enter key on Spotify input
+  document.getElementById('spotifyUrl')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addSpotify();
+  });
 }
 
-init();
+// Start with password check
+checkLogin();

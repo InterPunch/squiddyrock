@@ -9,6 +9,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Netflix+Sans:wght@300;400;500;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- Password Gate -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-box">
+      <div class="login-logo">NETFLIX</div>
+      <h2>Sign In</h2>
+      <p class="login-sub">Enter the password to access your library</p>
+      <form id="loginForm">
+        <input type="password" id="passwordInput" placeholder="Password" autocomplete="current-password" required />
+        <button type="submit" class="btn-primary">Sign In</button>
+      </form>
+      <p id="loginError" class="login-error hidden">Incorrect password</p>
+    </div>
+  </div>
+
+  <!-- Main App (hidden until unlocked) -->
+  <div id="app" class="app-hidden">
   <!-- Top Navigation -->
   <nav class="navbar">
     <div class="nav-left">
@@ -20,6 +36,7 @@
         <li data-section="my-list">My List</li>
         <li data-section="upload">Upload / Create</li>
         <li data-section="youtube">Pull from YouTube</li>
+        <li data-section="spotify">Spotify</li>
       </ul>
     </div>
     <div class="nav-right">
@@ -78,6 +95,18 @@
       <h2 class="row-title">Pulled from YouTube</h2>
       <div class="row-posters" id="youtubeImports"></div>
     </section>
+
+    <!-- Spotify -->
+    <section class="row" id="spotify-row">
+      <h2 class="row-title">Spotify</h2>
+      <div class="spotify-section">
+        <div class="spotify-add-bar">
+          <input type="text" id="spotifyUrl" placeholder="Paste Spotify track, album, or playlist link..." />
+          <button class="btn-spotify" onclick="addSpotify()">+ Add</button>
+        </div>
+        <div id="spotifyList" class="spotify-list"></div>
+      </div>
+    </section>
   </main>
 
   <!-- Upload / Create Modal Panel -->
@@ -89,21 +118,16 @@
     <div class="panel-body">
       <div class="tabs">
         <button class="tab active" data-tab="upload">Upload Video</button>
+        <button class="tab" data-tab="episode">Add to Series</button>
         <button class="tab" data-tab="series">Create Series</button>
         <button class="tab" data-tab="movie">Create Movie</button>
       </div>
 
-      <!-- Upload Tab -->
+      <!-- Upload Tab (standalone movie/video) -->
       <div class="tab-content active" id="tab-upload">
         <form id="uploadForm">
           <label>Title</label>
           <input type="text" id="uploadTitle" placeholder="e.g. My Home Video" required />
-
-          <label>Type</label>
-          <select id="uploadType">
-            <option value="movie">Movie</option>
-            <option value="episode">Episode (add to series later)</option>
-          </select>
 
           <label>Description</label>
           <textarea id="uploadDesc" rows="3" placeholder="Short description..."></textarea>
@@ -122,6 +146,40 @@
         </div>
       </div>
 
+      <!-- Add Episode to Series Tab -->
+      <div class="tab-content" id="tab-episode">
+        <form id="episodeForm">
+          <label>Select Series</label>
+          <select id="episodeSeries" required>
+            <option value="">-- Choose a series --</option>
+          </select>
+          <p class="hint" id="noSeriesHint" style="display:none;color:#e87c03;font-size:0.85rem;margin-top:4px;">
+            No series yet. Create one in the “Create Series” tab first.
+          </p>
+
+          <label>Season Number</label>
+          <input type="number" id="episodeSeason" min="1" value="1" required />
+
+          <label>Episode Number</label>
+          <input type="number" id="episodeNumber" min="1" value="1" required />
+
+          <label>Episode Title</label>
+          <input type="text" id="episodeTitle" placeholder="e.g. Pilot" required />
+
+          <label>Description (optional)</label>
+          <textarea id="episodeDesc" rows="2"></textarea>
+
+          <label>Video File</label>
+          <input type="file" id="episodeVideo" accept="video/*" required />
+
+          <button type="submit" class="btn-primary">Add Episode to Series</button>
+        </form>
+        <div id="episodeProgress" class="progress hidden">
+          <div class="progress-bar" id="episodeProgressBar"></div>
+          <span id="episodeProgressText">0%</span>
+        </div>
+      </div>
+
       <!-- Create Series Tab -->
       <div class="tab-content" id="tab-series">
         <form id="seriesForm">
@@ -134,7 +192,7 @@
           <label>Poster Image</label>
           <input type="file" id="seriesPoster" accept="image/*" />
 
-          <label>Number of Seasons (you can add episodes later)</label>
+          <label>Number of Seasons</label>
           <input type="number" id="seriesSeasons" min="1" value="1" />
 
           <button type="submit" class="btn-primary">Create Series</button>
@@ -169,7 +227,9 @@
       <button class="close-btn" onclick="closePanel('youtubePanel')">×</button>
     </div>
     <div class="panel-body">
-      <p class="info-text">Paste a YouTube URL or Video ID. The video will be embedded and added to your library. (No download — plays via YouTube embed for legal reasons.)</p>
+      <p class="info-text">
+        Paste a YouTube URL or Video ID. Videos are added as <strong>Online Only</strong> — they stream from YouTube when you play them (no file is saved to your computer). Browser apps cannot download YouTube videos to your HDD due to YouTube restrictions and browser security.
+      </p>
       
       <label>YouTube URL or Video ID</label>
       <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ or dQw4w9WgXcQ" />
@@ -183,7 +243,7 @@
         <option value="episode">Episode</option>
       </select>
 
-      <button class="btn-primary" onclick="pullFromYouTube()">Add to Library</button>
+      <button class="btn-primary" onclick="pullFromYouTube()">Add as Online Only</button>
 
       <div id="ytPreview" class="yt-preview hidden">
         <h3>Preview</h3>
@@ -216,15 +276,17 @@
         <p id="detailMeta"></p>
         <p id="detailDesc"></p>
         <div class="detail-actions">
-          <button class="btn-play" onclick="playFromDetail()">▶ Play</button>
-          <button class="btn-secondary" id="addToListBtn">+ My List</button>
+          <button class="btn-play" id="detailPlayBtn" onclick="playFromDetail()">▶ Play</button>
+          <button class="btn-secondary" onclick="closeDetail(); openPanel('uploadPanel'); document.querySelector('[data-tab=episode]').click();">+ Add Episode</button>
         </div>
+        <div id="episodesList" class="episodes-list hidden"></div>
       </div>
     </div>
   </div>
 
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
+  </div><!-- end #app -->
 
   <script src="app.js"></script>
 </body>

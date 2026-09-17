@@ -22,6 +22,93 @@ body {
   min-height: 100vh;
 }
 
+/* ===== LOGIN SCREEN ===== */
+.login-screen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  background-image: radial-gradient(ellipse at center, #1a1a1a 0%, #000 70%);
+}
+
+.login-screen.hidden {
+  display: none;
+}
+
+.login-box {
+  background: rgba(0, 0, 0, 0.75);
+  padding: 48px 56px;
+  border-radius: 4px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  border: 1px solid #333;
+}
+
+.login-logo {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--netflix-red);
+  letter-spacing: 2px;
+  margin-bottom: 28px;
+}
+
+.login-box h2 {
+  font-size: 1.8rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.login-sub {
+  color: #aaa;
+  font-size: 0.95rem;
+  margin-bottom: 28px;
+}
+
+#loginForm input[type="password"] {
+  width: 100%;
+  padding: 14px 16px;
+  background: #333;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 1rem;
+  margin-bottom: 16px;
+  outline: none;
+}
+
+#loginForm input[type="password"]:focus {
+  outline: 2px solid #fff;
+}
+
+#loginForm .btn-primary {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.05rem;
+  margin-top: 0;
+}
+
+.login-error {
+  color: #e87c03;
+  font-size: 0.9rem;
+  margin-top: 14px;
+}
+
+.login-error.hidden {
+  display: none;
+}
+
+.app-hidden {
+  display: none;
+}
+
+.app-visible {
+  display: block;
+}
+
 /* ===== NAVBAR ===== */
 .navbar {
   position: fixed;
@@ -311,6 +398,11 @@ main {
 
 .poster .badge.new {
   background: #46d369;
+}
+
+.poster .badge.online {
+  background: #1db954;
+  color: #000;
 }
 
 .poster .progress-bar-mini {
@@ -616,6 +708,152 @@ textarea {
 .detail-actions {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.episodes-list {
+  margin-top: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  border-top: 1px solid #333;
+  padding-top: 12px;
+}
+
+.episodes-list.hidden {
+  display: none;
+}
+
+.episodes-list h3 {
+  font-size: 1rem;
+  margin-bottom: 10px;
+  color: #e5e5e5;
+}
+
+.episode-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #222;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.episode-item:hover {
+  background: #333;
+}
+
+.episode-item .ep-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.episode-item .ep-num {
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
+.episode-item .ep-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.episode-item .ep-play {
+  background: var(--netflix-red);
+  border: none;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+/* ===== SPOTIFY SECTION ===== */
+.spotify-section {
+  width: 100%;
+}
+
+.spotify-add-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  max-width: 640px;
+}
+
+.spotify-add-bar input {
+  flex: 1;
+  padding: 12px 14px;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 24px;
+  color: #fff;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.spotify-add-bar input:focus {
+  border-color: #1db954;
+}
+
+.btn-spotify {
+  background: #1db954;
+  color: #000;
+  border: none;
+  padding: 0 22px;
+  border-radius: 24px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-spotify:hover {
+  background: #1ed760;
+}
+
+.spotify-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.spotify-card {
+  background: #181818;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 640px;
+  position: relative;
+}
+
+.spotify-card iframe {
+  width: 100%;
+  border: none;
+  display: block;
+}
+
+.spotify-card .spotify-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.7);
+  border: none;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  z-index: 2;
+}
+
+.spotify-empty {
+  color: #777;
+  font-size: 0.95rem;
+  padding: 12px 0;
 }
 
 /* ===== TOAST ===== */

@@ -89,6 +89,45 @@ function getVideoBlob(id) {
   });
 }
 
+function clearAllVideos() {
+  return new Promise((resolve, reject) => {
+    if (!db) {
+      resolve();
+      return;
+    }
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.clear();
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function resetApp() {
+  const ok = confirm(
+    'Reset the entire app?\n\nThis will permanently delete:\n• All uploaded videos\n• All series & episodes\n• YouTube items\n• Spotify list\n• Continue watching\n\nThis cannot be undone.'
+  );
+  if (!ok) return;
+
+  try {
+    await clearAllVideos();
+  } catch (e) {
+    console.warn('Could not clear video store:', e);
+  }
+
+  library = [];
+  continueWatching = [];
+  spotifyItems = [];
+
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(CONTINUE_KEY);
+  localStorage.removeItem(SPOTIFY_KEY);
+
+  renderRows();
+  renderSpotify();
+  showToast('App fully reset — all data wiped');
+}
+
 // ===== LocalStorage helpers =====
 function loadLibrary() {
   try {
@@ -901,6 +940,9 @@ async function initApp() {
   document.querySelector('.logo').addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
+
+  // Reset button
+  document.getElementById('resetBtn')?.addEventListener('click', resetApp);
 
   // Enter key on Spotify input
   document.getElementById('spotifyUrl')?.addEventListener('keydown', (e) => {

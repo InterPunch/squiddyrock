@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Netflix Clone – My Library</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Netflix+Sans:wght@300;400;500;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <div class="logo">NETFLIX</div>
+      <ul class="nav-links">
+        <li class="active" data-section="home">Home</li>
+        <li data-section="shows">Shows</li>
+        <li data-section="movies">Movies</li>
+        <li data-section="my-list">My List</li>
+        <li data-section="upload">Upload / Create</li>
+        <li data-section="youtube">Pull from YouTube</li>
+      </ul>
+    </div>
+    <div class="nav-right">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search titles..." />
+        <span class="search-icon">🔍</span>
+      </div>
+      <div class="profile">
+        <span class="profile-name">Charles</span>
+        <div class="avatar">C</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Banner -->
+  <header class="hero" id="hero">
+    <div class="hero-content">
+      <h1 id="heroTitle">Welcome to Your Netflix</h1>
+      <p id="heroDesc">Upload your own movies & series, or pull content from YouTube. Everything stays in your browser.</p>
+      <div class="hero-buttons">
+        <button class="btn-play" onclick="playFeatured()">▶ Play</button>
+        <button class="btn-info" onclick="showSection('upload')">+ Add Content</button>
+      </div>
+    </div>
+    <div class="hero-fade"></div>
+  </header>
+
+  <!-- Main Content Sections -->
+  <main>
+    <!-- Continue Watching -->
+    <section class="row" id="continue-row">
+      <h2 class="row-title">Continue Watching for Charles</h2>
+      <div class="row-posters" id="continueWatching"></div>
+    </section>
+
+    <!-- Today's Top Picks -->
+    <section class="row">
+      <h2 class="row-title">Today's Top Picks for You</h2>
+      <div class="row-posters" id="topPicks"></div>
+    </section>
+
+    <!-- Gems for You -->
+    <section class="row">
+      <h2 class="row-title">Gems for You</h2>
+      <div class="row-posters" id="gems"></div>
+    </section>
+
+    <!-- My Uploads / Library -->
+    <section class="row" id="my-library-row">
+      <h2 class="row-title">My Library (Uploads & Series)</h2>
+      <div class="row-posters" id="myLibrary"></div>
+    </section>
+
+    <!-- YouTube Imports -->
+    <section class="row" id="yt-row">
+      <h2 class="row-title">Pulled from YouTube</h2>
+      <div class="row-posters" id="youtubeImports"></div>
+    </section>
+  </main>
+
+  <!-- Upload / Create Modal Panel -->
+  <div class="panel" id="uploadPanel">
+    <div class="panel-header">
+      <h2>Upload Video / Create Series or Movie</h2>
+      <button class="close-btn" onclick="closePanel('uploadPanel')">×</button>
+    </div>
+    <div class="panel-body">
+      <div class="tabs">
+        <button class="tab active" data-tab="upload">Upload Video</button>
+        <button class="tab" data-tab="series">Create Series</button>
+        <button class="tab" data-tab="movie">Create Movie</button>
+      </div>
+
+      <!-- Upload Tab -->
+      <div class="tab-content active" id="tab-upload">
+        <form id="uploadForm">
+          <label>Title</label>
+          <input type="text" id="uploadTitle" placeholder="e.g. My Home Video" required />
+
+          <label>Type</label>
+          <select id="uploadType">
+            <option value="movie">Movie</option>
+            <option value="episode">Episode (add to series later)</option>
+          </select>
+
+          <label>Description</label>
+          <textarea id="uploadDesc" rows="3" placeholder="Short description..."></textarea>
+
+          <label>Poster Image (optional)</label>
+          <input type="file" id="uploadPoster" accept="image/*" />
+
+          <label>Video File</label>
+          <input type="file" id="uploadVideo" accept="video/*" required />
+
+          <button type="submit" class="btn-primary">Upload & Add to Library</button>
+        </form>
+        <div id="uploadProgress" class="progress hidden">
+          <div class="progress-bar" id="progressBar"></div>
+          <span id="progressText">0%</span>
+        </div>
+      </div>
+
+      <!-- Create Series Tab -->
+      <div class="tab-content" id="tab-series">
+        <form id="seriesForm">
+          <label>Series Title</label>
+          <input type="text" id="seriesTitle" placeholder="e.g. My Awesome Series" required />
+
+          <label>Description</label>
+          <textarea id="seriesDesc" rows="3"></textarea>
+
+          <label>Poster Image</label>
+          <input type="file" id="seriesPoster" accept="image/*" />
+
+          <label>Number of Seasons (you can add episodes later)</label>
+          <input type="number" id="seriesSeasons" min="1" value="1" />
+
+          <button type="submit" class="btn-primary">Create Series</button>
+        </form>
+      </div>
+
+      <!-- Create Movie Tab -->
+      <div class="tab-content" id="tab-movie">
+        <form id="movieForm">
+          <label>Movie Title</label>
+          <input type="text" id="movieTitle" placeholder="e.g. My Indie Film" required />
+
+          <label>Description</label>
+          <textarea id="movieDesc" rows="3"></textarea>
+
+          <label>Poster Image</label>
+          <input type="file" id="moviePoster" accept="image/*" />
+
+          <label>Video File (or add later)</label>
+          <input type="file" id="movieVideo" accept="video/*" />
+
+          <button type="submit" class="btn-primary">Create Movie Entry</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- YouTube Pull Panel -->
+  <div class="panel" id="youtubePanel">
+    <div class="panel-header">
+      <h2>Pull from YouTube</h2>
+      <button class="close-btn" onclick="closePanel('youtubePanel')">×</button>
+    </div>
+    <div class="panel-body">
+      <p class="info-text">Paste a YouTube URL or Video ID. The video will be embedded and added to your library. (No download — plays via YouTube embed for legal reasons.)</p>
+      
+      <label>YouTube URL or Video ID</label>
+      <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ or dQw4w9WgXcQ" />
+
+      <label>Custom Title (optional)</label>
+      <input type="text" id="ytTitle" placeholder="Leave blank to use default" />
+
+      <label>Type</label>
+      <select id="ytType">
+        <option value="movie">Movie / Standalone</option>
+        <option value="episode">Episode</option>
+      </select>
+
+      <button class="btn-primary" onclick="pullFromYouTube()">Add to Library</button>
+
+      <div id="ytPreview" class="yt-preview hidden">
+        <h3>Preview</h3>
+        <div id="ytEmbed"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video Player Modal -->
+  <div class="player-modal" id="playerModal">
+    <div class="player-container">
+      <button class="close-player" onclick="closePlayer()">×</button>
+      <div id="playerWrapper">
+        <!-- Video or iframe will be injected here -->
+      </div>
+      <div class="player-info">
+        <h2 id="playerTitle"></h2>
+        <p id="playerDesc"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="detail-modal" id="detailModal">
+    <div class="detail-content">
+      <button class="close-btn" onclick="closeDetail()">×</button>
+      <div class="detail-poster" id="detailPoster"></div>
+      <div class="detail-info">
+        <h1 id="detailTitle"></h1>
+        <p id="detailMeta"></p>
+        <p id="detailDesc"></p>
+        <div class="detail-actions">
+          <button class="btn-play" onclick="playFromDetail()">▶ Play</button>
+          <button class="btn-secondary" id="addToListBtn">+ My List</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

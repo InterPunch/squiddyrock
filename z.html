@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bikini Bound</title>
+<style>
+:root{
+  --bg:#0a0e14;--panel:#121a24;--panel2:#1a2433;--line:#2a3a4e;
+  --text:#e8eef5;--muted:#8a9bb0;--accent:#3db8ff;--accent2:#5eead4;
+  --danger:#ff3b5c;--ok:#5dffa8;--warn:#ffc857;
+  --bubble:#1a2838;--you:#243044;
+  --safe:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;height:100dvh;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;
+  -webkit-text-size-adjust:100%;touch-action:manipulation}
+button,input,select,textarea{font:inherit;color:inherit;font-size:16px}
+button{cursor:pointer;border:none;background:var(--panel2);color:var(--text);
+  padding:12px 16px;border-radius:12px;border:1px solid var(--line);min-height:44px}
+button:active{transform:scale(.98)}
+button.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;font-weight:600;color:#0a0e14}
+button.danger{background:var(--danger);border:none}
+button:disabled{opacity:.45;cursor:not-allowed}
+input,textarea,select{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;width:100%;font-size:16px}
+.hidden{display:none!important}
+
+#app{height:100%;height:100dvh;display:flex;flex-direction:column;width:100%;max-width:480px;margin:0 auto;position:relative;overflow:hidden}
+
+/* Top bar */
+.top{padding:max(10px,env(safe-area-inset-top)) 14px 8px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);background:rgba(10,14,20,.94);backdrop-filter:blur(8px);z-index:5;flex-shrink:0}
+.top h1{font-size:1.05rem;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;flex:1;min-width:0}
+.top .stat{font-size:.72rem;color:var(--muted);white-space:nowrap}
+.top button{padding:8px 12px;font-size:.8rem;min-height:40px}
+
+/* Screens */
+.screen{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;padding-bottom:calc(24px + var(--safe));min-height:0}
+.screen.no-scroll{overflow:hidden;display:flex;flex-direction:column;padding:0}
+
+/* Cards */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.card h2{font-size:1.1rem;margin-bottom:8px}
+.card h3{font-size:.95rem;color:var(--accent);margin-bottom:6px}
+.card p,.card .note{font-size:.88rem;color:var(--muted);line-height:1.45;margin-bottom:8px}
+.label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+
+/* Quiz */
+.quiz-opt{display:block;width:100%;text-align:left;margin:6px 0;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel2)}
+.quiz-opt:hover,.quiz-opt.sel{border-color:var(--accent);background:#1a3040}
+.progress-bar{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin:10px 0 16px}
+.progress-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s}
+
+/* Camp */
+.camp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.camp-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer}
+.camp-card .thumb{aspect-ratio:3/4;background:var(--panel2);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.camp-card .thumb img,.camp-card .thumb svg{width:100%;height:100%;object-fit:cover}
+.camp-card .meta{padding:8px 10px}
+.camp-card .meta b{display:block;font-size:.9rem}
+.camp-card .meta span{font-size:.72rem;color:var(--muted)}
+.camp-card.gf{border-color:var(--accent)}
+.camp-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+
+/* VN Stage */
+.stage{flex:1;display:flex;flex-direction:column;position:relative;background:#0c121a;min-height:0;overflow:hidden}
+.stage-bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.4}
+.stage-chars{flex:1 1 auto;display:flex;flex-direction:row;align-items:flex-end;justify-content:center;gap:8px;padding:6px 8px;position:relative;z-index:1;min-height:0;overflow:hidden}
+.stage-chars .ch{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-height:0;min-width:0}
+.stage-chars.solo .ch{flex:0 1 auto;max-width:100%;width:100%}
+.stage-chars.duo .ch{flex:1 1 50%;max-width:48%}
+.stage-chars.trio .ch{flex:1 1 33%;max-width:32%}
+.stage-chars .ch img,.stage-chars .ch svg{max-height:min(52dvh,420px);width:auto;max-width:100%;object-fit:contain;border-radius:10px;filter:drop-shadow(0 8px 20px rgba(0,0,0,.55))}
+.stage-chars.solo .ch img,.stage-chars.solo .ch svg{max-height:min(58dvh,480px)}
+.stage-chars.duo .ch img,.stage-chars.duo .ch svg{max-height:min(48dvh,360px)}
+.stage-chars.trio .ch img,.stage-chars.trio .ch svg{max-height:min(40dvh,280px)}
+.stage-chars .ch .name-tag{font-size:.7rem;background:rgba(0,0,0,.65);padding:3px 10px;border-radius:99px;margin-bottom:6px;color:var(--accent);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stage-chars .ch .ph{width:100%;aspect-ratio:3/4;max-height:min(48dvh,360px);background:#1a2433;border-radius:12px;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;color:#8a9bb0;font-size:.72rem;line-height:1.3}
+.dialogue-box{position:relative;z-index:2;background:rgba(10,14,20,.96);padding:12px 14px calc(16px + var(--safe));border-top:1px solid var(--line);flex-shrink:0;max-height:42dvh;display:flex;flex-direction:column}
+.dialogue-box .speaker{font-size:.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.dialogue-box .line{font-size:.92rem;line-height:1.45;min-height:2.4em;max-height:22dvh;overflow-y:auto;white-space:pre-wrap;-webkit-overflow-scrolling:touch;flex:1}
+.dialogue-box .line.narr{color:var(--muted);font-style:italic}
+.dialogue-controls{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;flex-shrink:0}
+.dialogue-controls button{flex:1;min-width:90px}
+.player-input{display:flex;gap:8px;margin-top:8px;align-items:stretch}
+.player-input input{flex:1;min-width:0}
+.player-input button{flex-shrink:0}
+.trap-meter{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0}
+.trap-meter i{display:block;height:100%;background:var(--danger);transition:width .35s linear}
+.trap-label{font-size:.75rem;color:var(--danger);font-weight:600}
+
+/* Settings */
+.row{display:flex;gap:8px;margin:8px 0;align-items:center}
+.row label{flex:1;font-size:.85rem}
+.status{font-size:.8rem;color:var(--muted);min-height:1.2em;margin-top:6px}
+
+/* Image slots */
+.slot-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slot{background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:8px;text-align:center;font-size:.75rem;cursor:pointer}
+.slot.has{border-style:solid;border-color:var(--ok)}
+.slot img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;margin-bottom:4px}
+
+/* SVG portrait fallback */
+.portrait-svg{width:100%;height:100%}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ========== STATE ========== */
+const KEY="bikini-bound-v1";
+const SLOTS=[
+  "front","back","hand_side","hand_side_back","cutesy","afraid","doomed","matter_of_fact",
+  "sexy1","sexy2","sexy3","sad1","sad2","angry","horny","sleepy","dead",
+  "deep_fried","bones","blown_up","baked","shreds","death_beam","into_lava","deep_fryer",
+  "man_eating_bugs","shredder_conveyor"
+];
+const SLOT_LABELS={
+  front:"Front view",back:"Back view",hand_side:"Hand on hip",hand_side_back:"Back + hand on hip",
+  cutesy:"Cutesy",afraid:"Afraid",doomed:"Doomed",matter_of_fact:"Matter-of-fact",
+  sexy1:"Sexy pose 1",sexy2:"Sexy pose 2",sexy3:"Sexy pose 3",sad1:"Sad 1",sad2:"Sad 2",
+  angry:"Angry",horny:"Horny",sleepy:"Sleepy",dead:"Dead",
+  deep_fried:"Deep fried",bones:"Bones",blown_up:"Blown up",baked:"Baked",shreds:"In shreds",
+  death_beam:"Death beam",into_lava:"Lowered into lava",deep_fryer:"Deep fryer",
+  man_eating_bugs:"Man-eating bugs",shredder_conveyor:"Shredder conveyor"
+};
+const TRAP_POOL=[
+  {id:"lava",name:"Lava Pit of Doom",img:"into_lava",desc:"a slowly descending platform over a molten lava pit"},
+  {id:"shredder",name:"Industrial Shredder",img:"shredder_conveyor",desc:"a conveyor belt feeding into massive spinning shredder blades"},
+  {id:"laser",name:"Death Beam Array",img:"death_beam",desc:"a focusing array of high-energy laser beams aimed to slice and incinerate"},
+  {id:"fryer",name:"Industrial Deep Fryer",img:"deep_fryer",desc:"a hydraulic cradle lowering into a vat of boiling oil"},
+  {id:"bugs",name:"Man-Eating Insect Swarm",img:"man_eating_bugs",desc:"a glass chamber filling with carnivorous beetles and wasps"},
+  {id:"crusher",name:"Hydraulic Crusher",img:"shreds",desc:"two spiked hydraulic plates closing in from both sides"},
+  {id:"acid",name:"Acid Vat",img:"into_lava",desc:"a tilting platform over a seething vat of industrial acid"},
+  {id:"compactor",name:"Trash Compactor",img:"shreds",desc:"a sealed steel room with walls slowly crushing inward"},
+  {id:"incinerator",name:"Plasma Incinerator",img:"baked",desc:"a sealed tube about to flood with plasma fire"},
+  {id:"spike",name:"Spike Pit Drop",img:"doomed",desc:"a trapdoor platform over a pit of barbed spikes"}
+];
+
+let S=load()||fresh();
+let apiKey=localStorage.getItem("bb-xai-key")||"xai-FgYWR7xna9sxRoFhrfeyPbTQxtfIfeFxpH7ZxlASBYbPdP5ioUTZyELlYHlLkpC5K4F2v0KzLYjB0qRf";
+let imageDB={}; // id -> {slot: dataURL}
+
+function fresh(){
+  return {
+    phase:"boot", // boot|quiz|camp|story|trap|gameover|victory
+    quizStep:0, quizAnswers:{},
+    gf:null, party:[],
+    story:null, chapter:0,
+    trapsFaced:[],
+    campTalk:null,
+    saves:0, losses:0
+  };
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
+
+/* ========== API ========== */
+const BUILTIN_KEY="xai-FgYWR7xna9sxRoFhrfeyPbTQxtfIfeFxpH7ZxlASBYbPdP5ioUTZyELlYHlLkpC5K4F2v0KzLYjB0qRf";
+function getKey(){return (apiKey&&apiKey.trim())||localStorage.getItem("bb-xai-key")||BUILTIN_KEY}
+async function ai(messages, opts={}){
+  const key=getKey();
+  if(!key)throw {code:"no_key",text:"No API key"};
+  const body={
+    model:opts.model||"grok-4-latest",
+    messages,
+    temperature:opts.temp??0.9,
+    max_tokens:opts.max||1800
+  };
+  let r;
+  try{
+    r=await fetch("https://api.x.ai/v1/chat/completions",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+      body:JSON.stringify(body)
+    });
+  }catch(net){
+    throw {code:"network",text:"Network blocked. Open this game from a hosted URL (e.g. Netlify Drop), not a raw file:// page. "+(net.message||"")};
+  }
+  if(!r.ok){const t=await r.text();throw {code:"api",text:t.slice(0,400)}}
+  const j=await r.json();
+  const content=j.choices?.[0]?.message?.content||"";
+  if(!content)throw {code:"empty",text:"Empty model response"};
+  return content;
+}
+async function aiJSON(prompt, opts={}){
+  const txt=await ai([{role:"user",content:prompt+"\n\nReply with ONLY valid JSON. No markdown."}],opts);
+  const m=txt.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+  if(!m)throw {code:"bad_json",text:txt.slice(0,300)};
+  return JSON.parse(m[0]);
+}
+
+/* ========== QUIZ ========== */
+// Quiz is about YOU (the player). Her personality is derived from your answers with interesting deviations.
+const QUIZ=[
+  {k:"gfName",q:"What do you want to name her?",type:"text",ph:"e.g. Luna"},
+  {k:"gfAge",q:"How old should she be? (18–38)",type:"num",min:18,max:38},
+  {k:"youVibe",q:"How would friends describe you?",type:"choice",opts:["The reliable one","The chaotic one","The quiet observer","The loud motivator","The romantic","The strategist","The daredevil","The caretaker"]},
+  {k:"youStress",q:"Under pressure you…",type:"choice",opts:["Stay calm and plan","Joke to cope","Get intense and focused","Need someone next to you","Charge in","Overthink","Get angry at the problem","Go quiet"]},
+  {k:"youLove",q:"How do you show care?",type:"choice",opts:["Words","Touch","Acts of service","Time and attention","Gifts","Protecting them","Teasing","Quiet presence"]},
+  {k:"youValue",q:"What matters most to you?",type:"choice",opts:["Loyalty","Freedom","Truth","Winning","Kindness","Power used right","Curiosity","Keeping promises"]},
+  {k:"youFear",q:"A fear that sits under the surface?",type:"choice",opts:["Being left","Failing someone who trusts you","Losing control","Being ordinary","Being used","Being weak","Being forgotten","Being wrong"]},
+  {k:"youConflict",q:"In a fight with someone you love you…",type:"choice",opts:["Talk it out fast","Need space first","Get sharp then soft","Apologize even if unsure","Dig in until proven wrong","Use humor to defuse","Go cold","Match their energy"]},
+  {k:"youAdventure",q:"Ideal adventure partner energy?",type:"choice",opts:["Matches my chaos","Balances me","Pushes me harder","Keeps me grounded","Flirts through danger","Is the brains","Is the muscle","Is unpredictable"]},
+  {k:"youFlirt",q:"Flirting style you respond to?",type:"choice",opts:["Bold and direct","Soft and lingering","Competitive banter","Intellectual","Shy then sudden","Physical proximity","Protective","Playful mean"]},
+  {k:"cause",q:"What noble cause should you two fight for?",type:"choice",opts:["Freeing a locked dimension","Stopping a reality-eating cult","Protecting the last living city","Stealing back stolen souls","Toppling a time-tyrant","Guarding a dying star's heart","Hunting a god-killer virus","Breaking a bloodline curse"]}
+];
+
+/* ========== PORTRAIT SVG ========== */
+function svgPortrait(g, pose="front"){
+  const skin=g.skinHex||"#e0b090";
+  const hair=g.hairHex||"#2a1a12";
+  const bikini=g.bikiniHex||"#1a1a1a";
+  const eye=g.eyeHex||"#3a2818";
+  // Simple stylized bikini girl SVG
+  return `<svg class="portrait-svg" viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="320" fill="#1a1524"/>
+    <ellipse cx="100" cy="300" rx="55" ry="14" fill="#000" opacity=".25"/>
+    <!-- legs -->
+    <path d="M70 200 Q65 250 68 290 Q78 292 82 270 L90 200" fill="${skin}"/>
+    <path d="M130 200 Q135 250 132 290 Q122 292 118 270 L110 200" fill="${skin}"/>
+    <!-- torso -->
+    <path d="M72 120 Q70 170 78 200 L122 200 Q130 170 128 120 Q115 128 100 128 Q85 128 72 120" fill="${skin}"/>
+    <!-- bikini bottom -->
+    <path d="M78 188 Q100 200 122 188 L120 198 Q100 210 80 198Z" fill="${bikini}"/>
+    <path d="M95 190 L100 205 L105 190" fill="${bikini}"/>
+    <!-- bikini top -->
+    <ellipse cx="85" cy="145" rx="16" ry="14" fill="${bikini}"/>
+    <ellipse cx="115" cy="145" rx="16" ry="14" fill="${bikini}"/>
+    <path d="M85 140 Q100 150 115 140" stroke="${bikini}" fill="none" stroke-width="3"/>
+    <path d="M100 128 L100 148" stroke="${bikini}" stroke-width="2"/>
+    <!-- arms -->
+    <path d="M72 130 Q50 150 48 190 Q58 192 62 160 Q68 145 74 135" fill="${skin}"/>
+    <path d="M128 130 Q150 150 152 190 Q142 192 138 160 Q132 145 126 135" fill="${skin}"/>
+    <!-- head -->
+    <ellipse cx="100" cy="88" rx="36" ry="40" fill="${skin}"/>
+    <!-- hair -->
+    <path d="M64 90 Q60 40 100 38 Q140 40 136 90 Q130 55 100 52 Q70 55 64 90" fill="${hair}"/>
+    <path d="M66 95 Q55 120 58 160 Q70 150 72 110" fill="${hair}"/>
+    <path d="M134 95 Q145 120 142 160 Q130 150 128 110" fill="${hair}"/>
+    <!-- face -->
+    <ellipse cx="88" cy="90" rx="4" ry="5" fill="${eye}"/>
+    <ellipse cx="112" cy="90" rx="4" ry="5" fill="${eye}"/>
+    <path d="M92 108 Q100 114 108 108" stroke="#c45a6e" fill="none" stroke-width="2" stroke-linecap="round"/>
+    ${pose==="afraid"||pose==="doomed"?`<path d="M84 78 Q88 74 92 78" stroke="#222" fill="none" stroke-width="1.5"/><path d="M108 78 Q112 74 116 78" stroke="#222" fill="none" stroke-width="1.5"/>`:""}
+    <text x="100" y="310" text-anchor="middle" fill="#9a8fb8" font-size="11" font-family="system-ui">${esc(g.name||"")}</text>
+  </svg>`;
+}
+
+function skinHex(s){
+  return ({Pale:"#f2d4c0","Fair with freckles":"#f0cfb4","Light olive":"#d4a574",Tan:"#c9966a","Golden brown":"#b07850","Deep brown":"#8a5a3a",Dark:"#5c3a28"})[s]||"#e0b090";
+}
+function hairHex(s){
+  if(/black|dark/i.test(s))return "#1a1210";
+  if(/blonde|silver|white/i.test(s))return "#e8d5a3";
+  if(/red|auburn/i.test(s))return "#a3421f";
+  if(/pink|blue|colorful/i.test(s))return "#c45a9a";
+  return "#3a2418";
+}
+function bikiniHex(s){
+  if(/black/i.test(s))return "#1a1a1a";
+  if(/red/i.test(s))return "#c62828";
+  if(/white/i.test(s))return "#f5f5f5";
+  if(/green|neon/i.test(s))return "#39ff14";
+  if(/blue/i.test(s))return "#1565c0";
+  if(/pink/i.test(s))return "#ff69b4";
+  if(/gold/i.test(s))return "#d4af37";
+  if(/purple/i.test(s))return "#7b1fa2";
+  return "#1a1a1a";
+}
+function eyeHex(s){
+  return ({Brown:"#3a2818",Hazel:"#8a6a3a",Green:"#3a6a3a",Blue:"#3a5a8a",Amber:"#b5772a",Grey:"#6a6a7a",Heterochromia:"#5a4a8a"})[s]||"#3a2818";
+}
+
+/* ========== IMAGE HELPERS (IndexedDB — survives HTML file updates) ========== */
+const IDB_NAME="BikiniBoundImages";
+const IDB_STORE="imgs";
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open(IDB_NAME,1);
+    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(IDB_STORE))db.createObjectStore(IDB_STORE)};
+    req.onsuccess=()=>res(req.result);
+    req.onerror=()=>rej(req.error);
+  });
+}
+async function idbSet(key,val){
+  const db=await idbOpen();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(IDB_STORE,"readwrite");
+    tx.objectStore(IDB_STORE).put(val,key);
+    tx.oncomplete=()=>res();
+    tx.onerror=()=>rej(tx.error);
+  });
+}
+async function idbGet(key){
+  const db=await idbOpen();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction(IDB_STORE,"readonly");
+    const req=tx.objectStore(IDB_STORE).get(key);
+    req.onsuccess=()=>res(req.result||null);
+    req.onerror=()=>rej(req.error);
+  });
+}
+function girlImg(g, slot){
+  const key=g.id+"_"+slot;
+  if(imageDB[key])return `<img src="${imageDB[key]}" alt="${slot}">`;
+  // fallback map
+  const map={
+    front:"front",back:"back",hand_side:"front",hand_side_back:"back",cutesy:"front",
+    afraid:"afraid",doomed:"doomed",matter_of_fact:"front",sexy1:"front",sexy2:"back",sexy3:"front",
+    sad1:"afraid",sad2:"afraid",angry:"front",horny:"front",sleepy:"front",dead:"doomed",
+    deep_fried:"doomed",bones:"doomed",blown_up:"doomed",baked:"doomed",shreds:"doomed",
+    death_beam:"doomed",into_lava:"doomed",deep_fryer:"doomed",man_eating_bugs:"doomed",shredder_conveyor:"doomed"
+  };
+  return svgPortrait(g, map[slot]||"front");
+}
+function needsImage(g, slot){
+  return !imageDB[g.id+"_"+slot];
+}
+/** Pick the image slot that matches how she dies — prefer exact trap art, then related death slots. */
+function deathSlotForTrap(g, trap){
+  const primary=(trap&&trap.img)||"doomed";
+  // Related fallbacks per trap type
+  const related={
+    shredder_conveyor:["shredder_conveyor","shreds","dead","doomed"],
+    shreds:["shreds","shredder_conveyor","dead","doomed"],
+    into_lava:["into_lava","baked","dead","doomed"],
+    deep_fryer:["deep_fryer","deep_fried","baked","dead","doomed"],
+    deep_fried:["deep_fried","deep_fryer","dead","doomed"],
+    death_beam:["death_beam","blown_up","baked","dead","doomed"],
+    blown_up:["blown_up","death_beam","dead","doomed"],
+    baked:["baked","deep_fried","into_lava","dead","doomed"],
+    man_eating_bugs:["man_eating_bugs","shreds","dead","doomed"],
+    bones:["bones","dead","doomed"],
+    doomed:["doomed","dead","afraid"],
+    dead:["dead","doomed"]
+  };
+  const order=[primary,...(related[primary]||[]),"dead","doomed","afraid"];
+  for(const s of order){
+    if(imageDB[g.id+"_"+s])return s;
+  }
+  return primary;
+}
+function girlDeathImg(g, trap){
+  return girlImg(g, deathSlotForTrap(g, trap));
+}
+function villainName(){
+  return (S.story&&S.story.villain&&S.story.villain.name)||"";
+}
+function isVillainName(nm){
+  if(!nm)return false;
+  const v=villainName().toLowerCase();
+  const n=String(nm).toLowerCase().trim();
+  if(n==="villain"||n==="the villain"||n==="enemy")return true;
+  if(v&&(n===v||n.includes(v)||v.includes(n)))return true;
+  return false;
+}
+function villainIconHtml(label){
+  const src=imageDB["villain_icon"];
+  const name=label||villainName()||"Villain";
+  if(src)return `<div class="ch"><div class="name-tag">${esc(name)}</div><img src="${src}" alt="${esc(name)}"></div>`;
+  return `<div class="ch"><div class="name-tag">${esc(name)}</div><div class="ph">Villain icon<br>Upload in Settings</div></div>`;
+}
+/** Render up to 3 character icons side by side */
+function renderCharsHtml(nameList, poseForGf){
+  const gf=S.gf;
+  let names=(nameList&&nameList.length)?nameList.slice(0,3):[gf?gf.name:"?"];
+  // Always include speaker-relevant people; dedupe
+  const seen=new Set();
+  names=names.filter(n=>{
+    const k=String(n).toLowerCase();
+    if(seen.has(k))return false;
+    seen.add(k);return true;
+  });
+  const html=names.map(nm=>{
+    const who=(S.party||[]).find(p=>p.name&&p.name.toLowerCase()===String(nm).toLowerCase())
+      ||(gf&&gf.name&&gf.name.toLowerCase()===String(nm).toLowerCase()?gf:null);
+    if(who){
+      const pose=(gf&&who.id===gf.id)?(poseForGf||"front"):"front";
+      return `<div class="ch"><div class="name-tag">${esc(who.name)}</div>${girlImg(who,pose)}</div>`;
+    }
+    if(isVillainName(nm))return villainIconHtml(villainName()||nm);
+    return `<div class="ch"><div class="name-tag">${esc(nm)}</div><div class="ph">No icon</div></div>`;
+  }).join("");
+  const layout=names.length>=3?"trio":names.length===2?"duo":"solo";
+  return {html,layout,count:names.length};
+}
+function applyChars(el, nameList, poseForGf){
+  if(!el)return;
+  const {html,layout}=renderCharsHtml(nameList, poseForGf);
+  el.className="stage-chars "+layout;
+  el.innerHTML=html;
+}
+async function storeImg(g, slot, file){
+  const url=await new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result);
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
+  const key=g.id+"_"+slot;
+  imageDB[key]=url;
+  try{await idbSet(key,url)}catch(e){}
+  try{localStorage.setItem("bb-img-"+key,url)}catch(e){} // backup; may fail if large
+}
+async function loadImgs(g){
+  for(const s of SLOTS){
+    const key=g.id+"_"+s;
+    if(imageDB[key])continue;
+    try{
+      const v=await idbGet(key);
+      if(v){imageDB[key]=v;continue}
+    }catch(e){}
+    try{
+      const v=localStorage.getItem("bb-img-"+key);
+      if(v)imageDB[key]=v;
+    }catch(e){}
+  }
+}
+
+/* ========== ESC ========== */
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+
+/* ========== RENDER ROOT ========== */
+const app=document.getElementById("app");
+function go(phase){S.phase=phase;save();render()}
+function render(){
+  if(S.phase==="boot")return renderBoot();
+  if(S.phase==="create")return renderCreateChoice();
+  if(S.phase==="quiz")return renderQuiz();
+  if(S.phase==="uploadAll")return renderUploadAll();
+  if(S.phase==="camp")return renderCamp();
+  if(S.phase==="story")return renderStory();
+  if(S.phase==="trap")return renderTrap();
+  if(S.phase==="gameover")return renderGameOver();
+  if(S.phase==="victory")return renderVictory();
+  if(S.phase==="settings")return renderSettings();
+  if(S.phase==="talk")return renderTalk();
+  renderBoot();
+}
+
+function renderCreateChoice(){
+  app.innerHTML=`
+  <div class="top"><button onclick="go('boot')">←</button><h1>Create her</h1></div>
+  <div class="screen">
+    <div class="card">
+      <h2>Create your girlfriend</h2>
+      <p class="note">The quiz is about <b>you</b>. The AI builds her personality to fit yours (with a few deviations). Then you upload her images and lock her outfit.</p>
+      <button class="primary" style="width:100%;margin-top:10px" onclick="QUIZ.forEach(q=>delete q._shuffled);S.phase='quiz';S.quizStep=0;S.quizAnswers={};save();render()">Start your personality quiz</button>
+    </div>
+  </div>`;
+}
+
+function renderUploadAll(){
+  const g=S.gf;
+  if(!g)return go("create");
+  app.innerHTML=`
+  <div class="top"><h1>Upload her images</h1></div>
+  <div class="screen">
+    <div class="card">
+      <h2>${esc(g.name)}</h2>
+      <p class="note">Upload your own images for every pose and situation you care about. <b>Front view is required.</b> She will <b>always</b> stay in the outfit shown in these images — the game will never change her clothes.</p>
+      <div class="label">Describe the exact outfit in your images (locked forever)</div>
+      <input id="outfitLock" placeholder="e.g. red crop top and low-rise jeans" value="${esc(g.outfit||"")}">
+      <p class="status" id="upSt"></p>
+      <button class="primary" style="width:100%;margin:10px 0" id="doneUp">Done — go to camp</button>
+    </div>
+    <div class="slot-grid" id="slots"></div>
+  </div>`;
+  const slots=document.getElementById("slots");
+  SLOTS.forEach(s=>{
+    const el=document.createElement("div");
+    el.className="slot"+(imageDB[g.id+"_"+s]?" has":"");
+    el.innerHTML=`${imageDB[g.id+"_"+s]?`<img src="${imageDB[g.id+"_"+s]}">`:""}${esc(SLOT_LABELS[s]||s)}${s==="front"?" *":""}
+      <input type="file" accept="image/*" hidden data-s="${s}">`;
+    el.onclick=()=>el.querySelector("input").click();
+    el.querySelector("input").onchange=async e=>{
+      const f=e.target.files[0];if(!f)return;
+      const outfitEl=document.getElementById("outfitLock");
+      if(outfitEl&&outfitEl.value.trim())g.outfit=outfitEl.value.trim();
+      await storeImg(g,s,f);
+      renderUploadAll();
+    };
+    slots.append(el);
+  });
+  document.getElementById("doneUp").onclick=async()=>{
+    const outfit=document.getElementById("outfitLock").value.trim();
+    if(outfit)g.outfit=outfit;
+    if(!imageDB[g.id+"_front"]){
+      document.getElementById("upSt").textContent="Upload at least a Front view image.";
+      return;
+    }
+    if(!g.outfit){
+      document.getElementById("upSt").textContent="Describe the exact outfit in your images so the game never changes it.";
+      return;
+    }
+    document.getElementById("upSt").textContent="Recruiting allies…";
+    if(!S.party.some(x=>x.role==="ally"))await genSideGirls();
+    S.phase="camp";save();render();
+  };
+}
+
+/* ========== BOOT ========== */
+function renderBoot(){
+  app.innerHTML=`
+  <div class="top"><h1>Bikini Bound</h1><button onclick="go('settings')">⚙</button></div>
+  <div class="screen">
+    <div class="card">
+      <h2>Adventure. Desire. Doom.</h2>
+      <p>You and your girlfriend fight for a noble cause. An enemy builds elaborate death machines meant for her. Save her — or watch her be destroyed.</p>
+      <p class="note">All characters are 18–38 and written to be sexy. Stories and deaths are AI-generated and unique each run.</p>
+      ${S.gf?`<button class="primary" style="width:100%;margin-top:10px" onclick="go('camp')">Continue with ${esc(S.gf.name)}</button>
+      <button style="width:100%;margin-top:8px" onclick="S=fresh();save();go('create')">New girlfriend</button>`:
+      `<button class="primary" style="width:100%;margin-top:10px" onclick="S=fresh();save();go('create')">Create your girlfriend</button>`}
+    </div>
+    <div class="card">
+      <div class="label">API key</div>
+      <p class="note">An xAI / Grok API key is required for story generation, dialogue, and death scenes.</p>
+      <input id="bootKey" type="password" placeholder="xai-..." value="${esc(apiKey)}">
+      <button class="primary" style="margin-top:8px;width:100%" onclick="apiKey=document.getElementById('bootKey').value.trim();localStorage.setItem('bb-xai-key',apiKey);document.getElementById('bootSt').textContent=apiKey?'Key saved.':'No key.'">Save key</button>
+      <p class="status" id="bootSt"></p>
+    </div>
+  </div>`;
+}
+
+/* ========== QUIZ ========== */
+function renderQuiz(){
+  const step=S.quizStep||0;
+  if(step>=QUIZ.length)return finishQuiz();
+  const q=QUIZ[step];
+  const pct=((step)/QUIZ.length*100)|0;
+  app.innerHTML=`
+  <div class="top"><h1>About you</h1><span class="stat">${step+1}/${QUIZ.length}</span></div>
+  <div class="screen">
+    <div class="progress-bar"><i style="width:${pct}%"></i></div>
+    <div class="card">
+      <h2>${esc(q.q)}</h2>
+      ${q.type==="text"?`<input id="ans" placeholder="${esc(q.ph||"")}" value="${esc(S.quizAnswers[q.k]||"")}">`:""}
+      ${q.type==="num"?`<input id="ans" type="number" min="${q.min}" max="${q.max}" value="${esc(S.quizAnswers[q.k]||"24")}">`:""}
+      ${q.type==="choice"?(q._shuffled||(q._shuffled=[...q.opts].sort(()=>Math.random()-.5))).map(o=>`<button class="quiz-opt ${S.quizAnswers[q.k]===o?"sel":""}" data-v="${esc(o)}">${esc(o)}</button>`).join(""):""}
+      <div class="camp-actions">
+        ${step>0?`<button onclick="S.quizStep--;save();render()">Back</button>`:""}
+        <button class="primary" id="next">Next</button>
+      </div>
+      <p class="status" id="qst"></p>
+    </div>
+  </div>`;
+  if(q.type==="choice"){
+    app.querySelectorAll(".quiz-opt").forEach(b=>b.onclick=()=>{
+      S.quizAnswers[q.k]=b.dataset.v;save();render();
+    });
+  }
+  document.getElementById("next").onclick=()=>{
+    let v;
+    if(q.type==="choice")v=S.quizAnswers[q.k];
+    else v=document.getElementById("ans").value.trim();
+    if(!v){document.getElementById("qst").textContent="Pick or type something.";return}
+    if(q.type==="num"){
+      v=+v;if(v<18||v>38){document.getElementById("qst").textContent="Age must be 18–38.";return}
+    }
+    if((q.k==="name"||q.k==="gfName")&&v.length<2){document.getElementById("qst").textContent="Give her a real name.";return}
+    S.quizAnswers[q.k]=v;
+    S.quizStep++;
+    save();render();
+  };
+}
+
+async function finishQuiz(){
+  app.innerHTML=`<div class="top"><h1>Creating her…</h1></div><div class="screen"><div class="card"><p>Reading your personality and building someone who fits — with a few interesting deviations…</p><p class="status" id="cst">Writing who she is…</p></div></div>`;
+  const a=S.quizAnswers;
+  let gf={
+    id:"gf_"+Date.now().toString(36),
+    name:String(a.gfName||a.name||"Luna").slice(0,24),
+    age:Math.min(38,Math.max(18,+(a.gfAge||a.age)||24)),
+    playerProfile:{vibe:a.youVibe,stress:a.youStress,love:a.youLove,value:a.youValue,fear:a.youFear,conflict:a.youConflict,adventure:a.youAdventure,flirt:a.youFlirt},
+    cause:a.cause,
+    role:"girlfriend",
+    rapport:3, alive:true,
+    sexAppealLevel:0 // 0-3 set by AI
+  };
+  try{
+    const r=await aiJSON(`The PLAYER took a personality test. Build his girlfriend for an adult adventure VN so she fits him — complementary, not a clone — with 1-2 interesting deviations that create friction or chemistry.
+Her name: ${gf.name}. Age: ${gf.age} (18-38).
+PLAYER profile:
+- Friends describe him as: ${a.youVibe}
+- Under pressure: ${a.youStress}
+- Shows care via: ${a.youLove}
+- Values: ${a.youValue}
+- Underlying fear: ${a.youFear}
+- In love-fights: ${a.youConflict}
+- Wants a partner who: ${a.youAdventure}
+- Responds to flirt style: ${a.youFlirt}
+Cause they fight for: ${a.cause}
+
+Rules: She is 18-38, sexy, not ugly, not overly skinny or fat. Invent looks (player will upload outfit images later — leave outfit as "see uploaded images").
+She never wipes after pooping (tiny rare detail).
+sexAppealLevel 0-3: how often she leans into body talk (boobs/butt/belly/thighs) — higher if player likes bold/physical flirt; lower if soft/shy. Still always sexy in presence.
+doomTalk: she uses dramatic words like toast, doomed, baked, cooked, done for, finished when danger is real — personality decides if it's gallows humor, fear, or defiance.
+
+JSON:
+{"ethnicity":"","hair":"","eyes":"","skin":"","body":"","bust":"","ass":"","outfit":"see uploaded images","look":"2 sentences","bodyDetail":"5-7 sensual sentences on figure — midriff, navel, breasts, hips, ass, thighs — so later scenes can reference her body accurately even before images","personality":"3 sentences based on player test + deviations","voice":"1-2 sentences","backstory":"3 sentences","dream":"1 sentence","flaw":"1 sentence","combatStyle":"1 sentence","loveLanguage":"1 sentence","sexAppealLevel":0-3,"doomVoice":"how she talks when nearly doomed, 1 sentence","catchphrase":""}`);
+    Object.assign(gf,r);
+    gf.sexAppealLevel=Math.min(3,Math.max(0,parseInt(r.sexAppealLevel)||1));
+    gf.skinHex=skinHex(gf.skin||"Tan");
+    gf.hairHex=hairHex(gf.hair||"");
+    gf.bikiniHex=bikiniHex(gf.outfit||"");
+    gf.eyeHex=eyeHex(gf.eyes||"Brown");
+  }catch(e){
+    gf.ethnicity="Mixed / Other";gf.hair="Long brown";gf.eyes="Brown";gf.skin="Tan";
+    gf.body="Soft hourglass";gf.bust="Full";gf.ass="Round and firm";gf.outfit="see uploaded images";
+    gf.look="A striking woman with long brown hair.";
+    gf.bodyDetail="Soft hourglass, full bust, round ass, soft midriff, visible navel, thick thighs.";
+    gf.personality="Built to match and push the player.";gf.voice="Warm, direct.";
+    gf.backstory="She joined the cause for her own reasons.";gf.dream="A life after the war.";
+    gf.flaw="Takes risks for people she loves.";gf.combatStyle="Improvised.";gf.loveLanguage=a.youLove||"Presence.";
+    gf.sexAppealLevel=2;gf.doomVoice="Gallows humor — calls herself toast when it gets bad.";
+    gf.skinHex=skinHex("Tan");gf.hairHex=hairHex("Long brown");gf.bikiniHex="";gf.eyeHex=eyeHex("Brown");
+  }
+  S.gf=gf;S.party=[gf];
+  await loadImgs(gf);
+  S.phase="uploadAll";save();render();
+}
+
+async function genSideGirls(){
+  // At most one extra ally — keep the cast small
+  if(S.party.filter(p=>p.role!=="girlfriend").length>=1)return;
+  const names=new Set([S.gf.name.toLowerCase()]);
+  try{
+    const r=await aiJSON(`Create ONE supporting ally for an adult adventure VN. Can be female (possible romance) or male (ally only, never romanceable, never put in death traps).
+Different from: ${S.gf.name}. Age 18-38.
+JSON: {"name":"first name","gender":"female|male","age":20-36,"ethnicity":"","hair":"","eyes":"","skin":"","body":"if female: soft hourglass|athletic curvy|petite curvy|slim-thick; if male: athletic|lean|solid","bust":"female only or empty","ass":"female only or empty","outfit":"","personality":"2 sentences","look":"1-2 sentences","bodyDetail":"2-3 sentences","voice":"1 sentence","backstory":"2 sentences","quirk":"1 sentence"}`);
+    if(names.has(String(r.name||"").toLowerCase()))return;
+    const female=String(r.gender||"female").toLowerCase()!=="male";
+    const g={
+      id:"p_"+Date.now().toString(36),
+      name:String(r.name||"Ally").slice(0,24),
+      gender:female?"female":"male",
+      age:Math.min(38,Math.max(18,+r.age||23)),
+      ethnicity:r.ethnicity||"Mixed / Other",hair:r.hair||"Dark",eyes:r.eyes||"Brown",
+      skin:r.skin||"Tan",body:r.body||(female?"Soft hourglass":"Athletic"),
+      bust:female?(r.bust||"Full"):"",ass:female?(r.ass||"Round and firm"):"",
+      outfit:r.outfit||"Travel gear",personality:r.personality||"Steady and reliable.",
+      look:r.look||"",bodyDetail:r.bodyDetail||"",voice:r.voice||"Straightforward.",
+      backstory:r.backstory||"",quirk:r.quirk||"",
+      role:female?"ally":"ally_male",romanceable:female,canTrap:false,
+      rapport:0,alive:true,
+      skinHex:skinHex(r.skin||"Tan"),hairHex:hairHex(r.hair||""),bikiniHex:bikiniHex(r.outfit||""),eyeHex:eyeHex(r.eyes||"Brown")
+    };
+    S.party.push(g);await loadImgs(g);
+  }catch(e){}
+  save();
+}
+
+/* ========== CAMP ========== */
+function renderCamp(){
+  const girls=S.party.filter(g=>g.alive);
+  app.innerHTML=`
+  <div class="top">
+    <h1>Camp</h1>
+    <span class="stat">Saves ${S.saves} · Lost ${S.losses}</span>
+    <button onclick="go('settings')">⚙</button>
+  </div>
+  <div class="screen">
+    <div class="card">
+      <h2>Base camp</h2>
+      <p>Free roam. Talk at camp or head out. The story starts with meeting her, then the cause. Death machines only target her (or both of you together) — never male allies.</p>
+      <div class="camp-actions">
+        <button class="primary" id="venture">${S.story?"Continue the mission":"Begin the mission"}</button>
+        <button id="newSide">Recruit one ally</button>
+      </div>
+      <p class="status" id="cst"></p>
+    </div>
+    <div class="label">Your people</div>
+    <div class="camp-grid" id="grid"></div>
+  </div>`;
+  const grid=document.getElementById("grid");
+  girls.forEach(g=>{
+    const el=document.createElement("div");
+    el.className="camp-card"+(g.role==="girlfriend"?" gf":"");
+    el.innerHTML=`<div class="thumb">${girlImg(g,"front")}</div>
+      <div class="meta"><b>${esc(g.name)}</b><span>${g.role==="girlfriend"?"Girlfriend":(g.gender==="male"||g.role==="ally_male")?"Ally (no romance)":"Ally"} · ${g.age} · Rapport ${g.rapport||0}</span></div>`;
+    el.onclick=()=>openGirl(g);
+    grid.append(el);
+  });
+  document.getElementById("venture").onclick=()=>startOrContinueStory();
+  document.getElementById("newSide").onclick=async()=>{
+    const st=document.getElementById("cst");st.textContent="Recruiting…";
+    await genSideGirls();st.textContent="Someone new arrived.";render();
+  };
+}
+
+function openGirl(g){
+  app.innerHTML=`
+  <div class="top"><button onclick="go('camp')">←</button><h1>${esc(g.name)}</h1></div>
+  <div class="screen">
+    <div class="card" style="text-align:center">
+      <div style="max-width:220px;margin:0 auto 12px">${girlImg(g,"front")}</div>
+      <h2>${esc(g.name)}, ${g.age}</h2>
+      <p>${esc(g.look||"")}</p>
+      <p class="note">${esc(g.bodyDetail||"")}</p>
+      <p class="note">${esc(g.personality||"")}</p>
+      <p class="note"><i>${esc(g.backstory||"")}</i></p>
+      <div class="camp-actions">
+        <button class="primary" onclick="S.campTalk='${g.id}';go('talk')">Talk</button>
+        <button onclick="manageImages('${g.id}')">Images</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function manageImages(gid){
+  const g=S.party.find(x=>x.id===gid);if(!g)return go("camp");
+  app.innerHTML=`
+  <div class="top"><button onclick="openGirl(${JSON.stringify(g).replace(/"/g,'&quot;')})">←</button><h1>Images · ${esc(g.name)}</h1></div>
+  <div class="screen">
+    <p class="note" style="margin-bottom:10px">Upload art for each pose/situation. Missing ones use a placeholder. For new death machines you'll be asked to upload.</p>
+    <div class="slot-grid" id="slots"></div>
+  </div>`;
+  // fix back button
+  app.querySelector(".top button").onclick=()=>openGirl(g);
+  const slots=document.getElementById("slots");
+  SLOTS.forEach(s=>{
+    const el=document.createElement("div");
+    el.className="slot"+(imageDB[g.id+"_"+s]?" has":"");
+    el.innerHTML=`${imageDB[g.id+"_"+s]?`<img src="${imageDB[g.id+"_"+s]}">`:""}${esc(SLOT_LABELS[s]||s)}
+      <input type="file" accept="image/*" hidden data-s="${s}">`;
+    el.onclick=()=>el.querySelector("input").click();
+    el.querySelector("input").onchange=async e=>{
+      const f=e.target.files[0];if(!f)return;
+      await storeImg(g,s,f);manageImages(gid);
+    };
+    slots.append(el);
+  });
+}
+
+/* ========== TALK ========== */
+async function renderTalk(){
+  const g=S.party.find(x=>x.id===S.campTalk);
+  if(!g)return go("camp");
+  app.innerHTML=`
+  <div class="top"><button id="back">←</button><h1>${esc(g.name)}</h1></div>
+  <div class="screen no-scroll">
+    <div class="stage">
+      <div class="stage-bg" style="background:radial-gradient(ellipse at center,#1a3040 0%,#0a0e14 70%)"></div>
+      <div class="stage-chars"><div class="ch"><div class="name-tag">${esc(g.name)}</div>${girlImg(g,"cutesy")}</div></div>
+      <div class="dialogue-box">
+        <div class="speaker">${esc(g.name)}</div>
+        <div class="line" id="line">…</div>
+        <div class="player-input"><input id="say" placeholder="Say something…" autocomplete="off"><button class="primary" id="send">Send</button></div>
+        <div class="dialogue-controls"><button id="leave">Leave</button></div>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById("back").onclick=document.getElementById("leave").onclick=()=>go("camp");
+  const line=document.getElementById("line");
+  const turns=[];
+  const isMale=g.gender==="male"||g.role==="ally_male";
+  const system=`You are ${g.name}, ${g.age}. ${g.look||""} ${g.bodyDetail||""}
+${!isMale?`Outfit (locked, never change): ${g.outfit||"her uploaded images"}.`:`Outfit: ${g.outfit||"travel gear"}.`}
+Personality: ${g.personality||""}. Voice: ${g.voice||"casual"}.
+${!isMale?`Sex-appeal ${g.sexAppealLevel??1}/3 — body talk only when it fits. Rare private quirk: never wipes after pooping (almost never mention). Doom words (toast/doomed/cooked) only in real danger.`:`Male ally — no romance.`}
+
+HOW TO TALK (critical):
+- Sound like a real text/voice conversation, not a novel.
+- Short sentences. Contractions. Fragments OK. "Yeah." "Wait, what?" "Hmm."
+- React to what they JUST said — answer, tease, ask back. Don't ignore them to deliver plot.
+- Don't monologue. Don't summarize your feelings in essay form.
+- Don't name the villain or the "quest" unless they bring it up or you're mid-crisis.
+- 1–4 short sentences max per reply. Occasional *small action* is fine.
+- Never change outfit.`;
+  async function ask(userMsg){
+    line.textContent="…";
+    try{
+      const msgs=[{role:"system",content:system},...turns,{role:"user",content:userMsg}];
+      const txt=await ai(msgs,{max:500,temp:0.95});
+      turns.push({role:"user",content:userMsg},{role:"assistant",content:txt});
+      line.textContent=txt;
+      g.rapport=(g.rapport||0)+1;save();
+    }catch(e){
+      const msg=e.code==="no_key"?"Add an xAI API key in settings."
+        :e.code==="network"?e.text
+        :e.code==="api"?"API error: "+(e.text||"request failed")
+        :(e.text||e.message||"She trails off…");
+      line.textContent=msg;
+    }
+  }
+  ask("(I walk up to you at camp.)");
+  document.getElementById("send").onclick=()=>{
+    const v=document.getElementById("say").value.trim();if(!v)return;
+    document.getElementById("say").value="";ask(v);
+  };
+  document.getElementById("say").onkeydown=e=>{if(e.key==="Enter")document.getElementById("send").click()};
+}
+
+/* ========== STORY ========== */
+async function startOrContinueStory(){
+  if(!getKey()){alert("Add an xAI API key in settings first.");return}
+  if(!S.story){
+    app.innerHTML=`<div class="top"><h1>Mission</h1></div><div class="screen"><div class="card"><p>Generating a 30-chapter story…</p><p class="status" id="sst">Starting with how you meet — villain comes later…</p></div></div>`;
+    try{
+      const gf=S.gf;
+      const r=await aiJSON(`Create a unique adult adventure visual-novel plot with EXACTLY 30 chapters.
+Hero pair: player + girlfriend ${gf.name} (${gf.age}, ${gf.personality}, outfit: ${gf.outfit||"her images"}). Cause: ${gf.cause}.
+
+MANDATORY STRUCTURE:
+Ch 1–5: ONLY meeting and bonding. Everyday moments, chemistry, banter, getting to know each other. NO villain. NO cause briefing. NO death traps. NO ominous "someone is hunting you" talk. Pure relationship.
+Ch 6–8: The noble cause enters naturally (a job, a rumor, a cry for help). Still no death machines. Villain may be named as a distant threat at most.
+Ch 9–28: Adventure chapters. Mix travel, clues, quiet camp nights, close calls. About 8–10 of these end with ${gf.name} in a death trap (trapId from: lava,shredder,laser,fryer,bugs,crusher,acid,compactor,incinerator,spike). Other chapters have trapId "none". Vary traps; don't repeat the same trapId back-to-back.
+Ch 29: Build-up to the final confrontation. No trap or optional tension only.
+Ch 30: Final showdown — ultimate combined doom machine (trapId "final").
+
+Rules: Male NPCs never romanceable, never in death machines. Only she (or player with her) faces traps.
+Keep each chapter summary to ONE short sentence. Titles short.
+
+JSON:
+{"title":"story title","causeDetail":"2 sentences","villain":{"name":"","title":"","motive":"2 sentences","voice":"1 sentence"},
+"chapters":[ /* exactly 30 objects */ {"title":"","summary":"one sentence","trapId":"none or trap id","trapSetup":"empty if none, else how she is bound"} ]
+}`,{max:4000});
+      if(!r.chapters||r.chapters.length<20){
+        // pad to 30 if model under-delivered
+        while(r.chapters.length<30){
+          const i=r.chapters.length;
+          r.chapters.push(i<5
+            ?{title:"Together",summary:"A quiet stretch of time with her — no missions, just the two of you.",trapId:"none",trapSetup:""}
+            :i===29
+            ?{title:"Final showdown",summary:"The ultimate combined death machine.",trapId:"final",trapSetup:"every prior machine fused together"}
+            :{title:"The road",summary:"Another leg of the journey.",trapId:"none",trapSetup:""});
+        }
+      }
+      r.chapters=r.chapters.slice(0,30);
+      const used=new Set();
+      r.chapters=r.chapters.map((c,i)=>{
+        let tid=String(c.trapId||"none").toLowerCase();
+        // Force no traps / no villain machinery in opening arc
+        if(i<8)tid="none";
+        if(i===29)tid="final";
+        if(tid==="none"||tid===""){
+          return {...c,trap:null,trapId:"none",trapSetup:""};
+        }
+        if(tid==="final"||i===29){
+          return {...c,trap:{id:"final",name:"Ultimate Doom Engine",img:"doomed",desc:"a nightmarish fusion of every death machine faced so far"},trapId:"final"};
+        }
+        let t=TRAP_POOL.find(x=>x.id===tid&&!used.has(x.id))||TRAP_POOL.find(x=>!used.has(x.id))||TRAP_POOL[i%TRAP_POOL.length];
+        used.add(t.id);
+        return {...c,trap:t,trapId:t.id};
+      });
+      S.story=r;S.chapter=0;S.trapsFaced=[];save();
+    }catch(e){
+      document.getElementById("sst").textContent="Story generation failed. Check API key. "+(e.text||e.code||"");
+      return;
+    }
+  }
+  go("story");
+}
+
+function renderStory(){
+  const ch=S.story.chapters[S.chapter];
+  if(!ch){S.phase="victory";save();return render()}
+  // If this chapter already at trap, go trap
+  runStoryScene(ch);
+}
+
+async function runStoryScene(ch){
+  const gf=S.gf;
+  const hasTrap=!!(ch.trap&&ch.trap.id&&ch.trapId!=="none");
+  app.innerHTML=`
+  <div class="top"><h1>${esc(S.story.title)}</h1><span class="stat">Ch ${S.chapter+1}/${S.story.chapters.length}</span></div>
+  <div class="screen no-scroll">
+    <div class="stage">
+      <div class="stage-bg" id="bg" style="background:radial-gradient(ellipse at 30% 20%,#1a3a50 0%,#0a0e14 60%)"></div>
+      <div class="stage-chars" id="chars"></div>
+      <div class="dialogue-box">
+        <div class="speaker" id="spk">Scene</div>
+        <div class="line" id="line">…</div>
+        <div class="player-input" id="pin"><input id="say" placeholder="Say something…" autocomplete="off"><button class="primary" id="send">Send</button></div>
+        <div class="dialogue-controls">
+          <button id="skip">Continue</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  const chars=document.getElementById("chars");
+  chars.innerHTML=`<div class="ch"><div class="name-tag">${esc(gf.name)}</div>${girlImg(gf,"matter_of_fact")}</div>`;
+  const line=document.getElementById("line"),spk=document.getElementById("spk");
+  let beats=[];
+  try{
+    const chNum=S.chapter+1;
+    const early=S.chapter<5; // chapters 1-5: pure bonding
+    const preVillain=S.chapter<8;
+    const trapNote=hasTrap
+      ?("This chapter ends with her captured and bound into: "+(ch.trap.name)+" ("+(ch.trap.desc)+"). Setup: "+(ch.trapSetup||"")+". End with her secured in the trap.")
+      :"No death trap. End on a natural beat.";
+    const tone=early
+      ?"EARLY BONDING ONLY. You just met / are hanging out. Small talk, awkward laughs, questions about each other, mild flirting. NO villain, NO mission, NO destiny, NO ominous foreshadowing."
+      :preVillain
+      ?"Still mostly personal. Cause can peek in once, lightly. No villain speech. No death machines."
+      :"Adventure ongoing, but talk like people on the road — side comments, complaints, jokes. Plot only when needed. Doom words only in real danger.";
+    const vNote=preVillain
+      ?"Zero villain mentions."
+      :("Villain ("+(villainName()||"the antagonist")+") only if this chapter truly needs them.");
+    const prompt=[
+      "Write a REAL CONVERSATION for chapter "+chNum+"/30 — "+(ch.title||"")+".",
+      tone,
+      "Her: "+gf.name+". Personality: "+(gf.personality||"")+". Voice: "+(gf.voice||"casual")+".",
+      "Outfit (locked): "+(gf.outfit||"uploaded outfit")+".",
+      "Soft scene goal: "+(ch.summary||""),
+      trapNote,
+      "",
+      "DIALOGUE RULES:",
+      "- Mostly HER lines, as if texting/talking face to face.",
+      "- Narrator beats are 1 short sentence max, and rare (at most 2 in the whole set).",
+      "- Each of her lines: 1-3 short spoken sentences. Contractions. Interruptions.",
+      "- NO exposition dumps. NO speech-making.",
+      "- She should ask HIM things, react, banter — not lecture.",
+      vNote,
+      "",
+      "When someone else is present (ally or villain), list them in chars so icons show side by side.",
+      "JSON shape: beats array of {speaker, text, pose, bg, chars}.",
+      "speaker is Narrator or a character name. pose: front, cutesy, sexy1, matter_of_fact, afraid, angry, doomed. bg: calm, warm, tense, or danger.",
+      "6-10 beats. At least 5 must be her speaking. Multi-person beats must list every visible person in chars."
+    ].join("\n");
+    const r=await aiJSON(prompt);
+    beats=r.beats||[];
+  }catch(e){
+    beats=hasTrap?[
+      {speaker:"Narrator",text:ch.summary,pose:"matter_of_fact",bg:"dark"},
+      {speaker:gf.name,text:"Something's wrong. Stay close.",pose:"afraid",bg:"dark"},
+      {speaker:"Narrator",text:`${gf.name} is bound into ${ch.trap.name}.`,pose:"doomed",bg:"danger"}
+    ]:S.chapter<5?[
+      {speaker:"Narrator",text:ch.summary||"You run into each other somewhere ordinary.",pose:"matter_of_fact",bg:"calm"},
+      {speaker:gf.name,text:"Oh— hey. Sorry, I almost walked right into you.",pose:"cutesy",bg:"warm"},
+      {speaker:gf.name,text:"I'm "+gf.name+". You come here a lot, or am I just lucky?",pose:"front",bg:"warm"},
+      {speaker:"Narrator",text:"Whatever this is, it doesn't feel like a mission. Not yet.",pose:"matter_of_fact",bg:"calm"}
+    ]:[
+      {speaker:"Narrator",text:ch.summary||"The day unfolds.",pose:"matter_of_fact",bg:"calm"},
+      {speaker:gf.name,text:"You good? You've got that look.",pose:"front",bg:"calm"}
+    ];
+  }
+  let i=0;
+  const show=()=>{
+    if(i>=beats.length){
+      if(hasTrap){S.phase="trap";save();renderTrap();return}
+      S.chapter++;save();
+      if(S.chapter>=S.story.chapters.length)go("victory");
+      else go("story");
+      return;
+    }
+    const b=beats[i];
+    spk.textContent=b.speaker||"Scene";
+    line.textContent=b.text||"";
+    line.className="line"+(b.speaker==="Narrator"?" narr":"");
+    const pose=b.pose||"front";
+    // Build on-screen cast: explicit chars + speaker if they're a person
+    let names=(b.chars&&b.chars.length)?[...b.chars]:[gf.name];
+    if(b.speaker&&b.speaker!=="Narrator"&&b.speaker!=="Scene"&&b.speaker!=="Other"){
+      if(!names.some(n=>String(n).toLowerCase()===String(b.speaker).toLowerCase()))names.push(b.speaker);
+    }
+    if(isVillainName(b.speaker)||(b.chars||[]).some(isVillainName)){
+      const vn=villainName();
+      if(vn&&!names.some(isVillainName))names.push(vn);
+    }
+    // Always show GF in story scenes unless it's pure villain (still OK to show both)
+    if(gf&&!names.some(n=>String(n).toLowerCase()===gf.name.toLowerCase())&&names.length<3)names.unshift(gf.name);
+    applyChars(chars, names.slice(0,3), pose);
+    if(/danger|trap|doom|villain/i.test(b.bg||""))document.getElementById("bg").style.background="radial-gradient(ellipse at 50% 80%,#5a1020 0%,#0d0b12 65%)";
+  };
+  show();
+  document.getElementById("skip").onclick=()=>{i++;show()};
+  document.getElementById("send").onclick=async()=>{
+    const v=document.getElementById("say").value.trim();if(!v)return;
+    document.getElementById("say").value="";
+    line.textContent="…";
+    try{
+      const txt=await ai([{role:"system",content:`You are ${gf.name}. Personality: ${gf.personality||""}. Voice: ${gf.voice||"casual"}. Outfit locked: ${gf.outfit||"her images"}.
+Talk like a real person in conversation — short, reactive, contracted. 1-3 sentences. No monologues, no plot lectures. Answer what they said.`},{role:"user",content:`Scene beat: ${beats[i]?.text||""}\nThey say: "${v}"\nReply in character only.`}],{max:220,temp:0.95});
+      spk.textContent=gf.name;line.textContent=txt;line.className="line";
+    }catch(e){line.textContent=e.text||e.message||"…"}
+  };
+}
+
+/* ========== TRAP / SAVE OR DIE ========== */
+let trapState=null;
+async function renderTrap(){
+  const ch=S.story.chapters[S.chapter];
+  const gf=S.gf;
+  const trap=ch.trap;
+  if(!trap){S.chapter++;save();if(S.chapter>=S.story.chapters.length)return go("victory");return go("story")}
+  // Ensure image for this trap
+  const imgSlot=trap.img||"doomed";
+  if(needsImage(gf,imgSlot)){
+    app.innerHTML=`
+    <div class="top"><h1>Image needed</h1></div>
+    <div class="screen"><div class="card">
+      <h2>${esc(trap.name)}</h2>
+      <p>No image for this situation yet. Upload one of ${esc(gf.name)} in this trap, or skip with placeholder.</p>
+      <p class="note">${esc(SLOT_LABELS[imgSlot]||imgSlot)}</p>
+      <input type="file" id="tf" accept="image/*">
+      <div class="camp-actions" style="margin-top:12px">
+        <button class="primary" id="up">Use upload</button>
+        <button id="sk">Skip / placeholder</button>
+      </div>
+    </div></div>`;
+    document.getElementById("sk").onclick=()=>beginTrapScene(ch,gf,trap);
+    document.getElementById("up").onclick=async()=>{
+      const f=document.getElementById("tf").files[0];
+      if(f)await storeImg(gf,imgSlot,f);
+      beginTrapScene(ch,gf,trap);
+    };
+    return;
+  }
+  beginTrapScene(ch,gf,trap);
+}
+
+async function beginTrapScene(ch,gf,trap){
+  app.innerHTML=`
+  <div class="top"><h1>${esc(trap.name)}</h1></div>
+  <div class="screen no-scroll">
+    <div class="stage">
+      <div class="stage-bg" style="background:radial-gradient(ellipse at 50% 100%,#6a1528 0%,#0d0b12 55%)"></div>
+      <div class="stage-chars solo" id="chars"><div class="ch"><div class="name-tag">${esc(gf.name)}</div>${girlImg(gf,trap.img||"doomed")}</div></div>
+      <div class="dialogue-box">
+        <div class="trap-label" id="tlab">DANGER</div>
+        <div class="trap-meter"><i id="tm" style="width:0%"></i></div>
+        <div class="speaker" id="spk">Scene</div>
+        <div class="line" id="line">Loading the trap…</div>
+        <div class="dialogue-controls" id="ctl"><button class="primary" disabled>…</button></div>
+      </div>
+    </div>
+  </div>`;
+  let scene;
+  try{
+    scene=await aiJSON(`Write an elaborate, dramatic, sexy spy-movie death-trap sequence with LOTS of her dialogue.
+Victim: ${gf.name}, age ${gf.age}. Personality: ${gf.personality}
+LOCKED OUTFIT (quote exactly, never invent clothes): ${gf.outfit||"outfit from her uploaded images"}
+Body: ${gf.bodyDetail}
+Trap: ${trap.name} — ${trap.desc}
+Setup: ${ch.trapSetup}
+Villain: ${S.story.villain.name}
+She talks throughout — fear, defiance, doom words (toast, doomed, baked, cooked, done for, finished), sex-appeal level ${gf.sexAppealLevel||1}/3.
+JSON:
+{"intro":"60-90 words narration: bound in trap, exact outfit, machine priming",
+"introLine":"what SHE says when the trap arms — doom word, in character",
+"beats":[
+  {"narr":"escalation narration 1","her":"what she says"},
+  {"narr":"escalation 2","her":"what she says with doom word"},
+  {"narr":"escalation 3","her":"desperate line"}
+],
+"minigame":{"label":"timed task label","target":12,"seconds":18},
+"panicLine":"what she yells during the timed save",
+"successText":"rescue narration","saveLine":"what she says when saved",
+"death":{"pain":"200-280 words EXTREMELY graphic gore destroying her sexy body in locked outfit — no cutaway","herLast":"her last words","remains":"aftermath"}}`);
+  }catch(e){
+    scene={
+      intro:`${gf.name} is chained on the ${trap.name}, still in ${gf.outfit||"her outfit"}. Sparks fly. The blades wait.`,
+      introLine:"Oh no—no, no, I'm actually toast if you don't move!",
+      beats:[
+        {narr:"The conveyor lurches forward.",her:"This is bad. Like, cooked-bad."},
+        {narr:"A warning klaxon howls.",her:"I'm doomed, okay? Doomed! Get me out!"},
+        {narr:"The final sequence locks in.",her:"Don't let me get finished in this thing—please!"}
+      ],
+      minigame:{label:"Smash the override sequence",target:12,seconds:18},
+      panicLine:"Hurry—I'm about to be shredded!",
+      successText:"The machine grinds to a halt. Chains go slack.",
+      saveLine:"I thought I was done for. Don't you dare let go.",
+      death:{pain:`The ${trap.name} takes her apart in prolonged graphic detail.`,herLast:"I—I'm toast—",remains:"Almost nothing left."}
+    };
+  }
+  // Normalize beats
+  if(!scene.beats||!scene.beats.length){
+    scene.beats=(scene.threats||[]).map((t,i)=>({narr:t,her:(scene.herLines||[])[i]||""}));
+  }
+  const line=document.getElementById("line"),spk=document.getElementById("spk"),ctl=document.getElementById("ctl"),tm=document.getElementById("tm");
+  // Build linear script: intro narr → her intro → beat narr/her pairs → minigame
+  const script=[];
+  script.push({who:"narr",text:scene.intro});
+  if(scene.introLine)script.push({who:gf.name,text:scene.introLine});
+  (scene.beats||[]).forEach(b=>{
+    if(b.narr)script.push({who:"narr",text:b.narr});
+    if(b.her)script.push({who:gf.name,text:b.her});
+  });
+  let si=0;
+  const showStep=()=>{
+    if(si>=script.length){startTimedSave(scene,gf,trap);return}
+    const s=script[si];
+    const isHer=s.who!=="narr";
+    spk.textContent=isHer?s.who:"Scene";
+    line.textContent=s.text;
+    line.className="line"+(isHer?"":" narr");
+    tm.style.width=((si+1)/ (script.length+1) *65)+"%";
+    si++;
+    ctl.innerHTML=`<button class="primary" id="nx">${si>=script.length?"Save her — GO":"Next"}</button>`;
+    document.getElementById("nx").onclick=showStep;
+  };
+  showStep();
+}
+
+function startTimedSave(scene,gf,trap){
+  const line=document.getElementById("line"),spk=document.getElementById("spk"),ctl=document.getElementById("ctl"),tm=document.getElementById("tm");
+  const target=Math.max(8,Math.min(20,+(scene.minigame?.target)||12));
+  const seconds=Math.max(10,Math.min(30,+(scene.minigame?.seconds)||18));
+  let taps=0, left=seconds, dead=false, timer=null;
+  const panic=scene.panicLine||"Hurry—I'm about to be toast!";
+  spk.textContent=gf.name;
+  line.textContent=`"${panic}"\n\n${scene.minigame?.label||"Hit OVERRIDE before she's done for!"}\n${taps}/${target} · ${left}s`;
+  line.className="line";
+  tm.style.width="65%";tm.style.background="var(--danger)";
+  const tick=()=>{
+    left--;
+    tm.style.width=(65+((seconds-left)/seconds)*35)+"%";
+    line.textContent=`"${panic}"\n\n${scene.minigame?.label||"Hit OVERRIDE!"}\n${taps}/${target} · ${left}s`;
+    if(left<=0 && !dead){dead=true;clearInterval(timer);resolveTrap(false,scene,gf,trap)}
+  };
+  timer=setInterval(tick,1000);
+  ctl.innerHTML=`<button class="primary" id="tap" style="min-height:72px;font-size:1.15rem;font-weight:700">OVERRIDE (${taps}/${target})</button>`;
+  document.getElementById("tap").onclick=()=>{
+    if(dead)return;
+    taps++;
+    document.getElementById("tap").textContent=`OVERRIDE (${taps}/${target})`;
+    line.textContent=`"${panic}"\n\n${scene.minigame?.label||"Hit OVERRIDE!"}\n${taps}/${target} · ${left}s`;
+    if(taps>=target){dead=true;clearInterval(timer);resolveTrap(true,scene,gf,trap)}
+  };
+}
+
+async function resolveTrap(ok,scene,gf,trap){
+  const line=document.getElementById("line"),spk=document.getElementById("spk"),ctl=document.getElementById("ctl"),tm=document.getElementById("tm"),chars=document.getElementById("chars");
+  if(ok){
+    tm.style.width="0%";tm.style.background="var(--ok)";
+    spk.textContent="Rescued";
+    line.className="line narr";
+    line.textContent=(scene.successText||scene.action?.successText||"The machine stops.")+"\n\n"+gf.name+': "'+(scene.saveLine||"I thought I was toast.")+'"';
+    chars.innerHTML=`<div class="ch"><div class="name-tag">${esc(gf.name)}</div>${girlImg(gf,"cutesy")}</div>`;
+    chars.className="stage-chars solo";
+    S.saves++;
+    S.trapsFaced.push(trap.id);
+    S.chapter++;
+    save();
+    ctl.innerHTML=`<button class="primary" id="cont">Continue</button>`;
+    document.getElementById("cont").onclick=()=>{
+      if(S.chapter>=S.story.chapters.length)go("victory");
+      else go("story");
+    };
+  }else{
+    tm.style.width="100%";
+    const last=scene.death?.herLast||"I'm toast—";
+    spk.textContent=gf.name;
+    line.className="line";
+    line.textContent=`"${last}"`;
+    const dSlot=deathSlotForTrap(gf,trap);
+    S.lastDeathSlot=dSlot;
+    S.lastDeathTrap=trap;
+    chars.innerHTML=`<div class="ch"><div class="name-tag">${esc(gf.name)}</div>${girlDeathImg(gf,trap)}</div>`;
+    if(chars)chars.className="stage-chars solo";
+    ctl.innerHTML=`<button class="danger" id="seeDeath">…</button>`;
+    document.getElementById("seeDeath").onclick=async()=>{
+      spk.textContent="LOST";
+      line.className="line narr";
+      line.textContent="…";
+      // Keep matching death art on screen
+      chars.innerHTML=`<div class="ch"><div class="name-tag">${esc(gf.name)}</div>${girlDeathImg(gf,trap)}</div>`;
+      let deathTxt=scene.death?.pain||"The trap claims her.";
+      let remains=scene.death?.remains||"";
+      try{
+        const extra=await ai(`Expand this death into 200-280 words. EXTREMELY graphic gore. Slow, visceral, degrading, agonizing. Focus on her sexy body (breasts, belly, ass, thighs) being destroyed while still in her LOCKED OUTFIT: ${gf.outfit||"her uploaded outfit"} — never invent different clothes. No cutaway. Include her voice breaking with doom words.\nTrap: ${trap.name}\nDeath image context: ${dSlot}\nGirl: ${gf.name}, ${gf.bodyDetail}\nSeed: ${deathTxt}`,{max:900,temp:0.95});
+        if(extra&&extra.length>80)deathTxt=extra;
+      }catch(e){}
+      line.textContent=deathTxt+(remains?"\n\n"+remains:"");
+      gf.alive=false;
+      S.losses++;
+      S.phase="gameover";
+      save();
+      ctl.innerHTML=`<button class="danger" id="end">Aftermath</button>`;
+      document.getElementById("end").onclick=()=>go("gameover");
+    };
+  }
+}
+
+/* ========== ENDINGS ========== */
+function renderGameOver(){
+  const gf=S.gf;
+  const deathArt=S.lastDeathTrap?girlDeathImg(gf,S.lastDeathTrap):girlImg(gf,S.lastDeathSlot||"dead");
+  app.innerHTML=`
+  <div class="top"><h1>She is gone</h1></div>
+  <div class="screen">
+    <div class="card">
+      <div style="max-width:280px;margin:0 auto 12px">${deathArt}</div>
+      <h2>${esc(gf.name)} did not make it</h2>
+      <p>The cause continues without her. The enemy won this round.</p>
+      <p class="note">A new story means a new girlfriend. This run is over.</p>
+      <button class="primary" style="width:100%;margin-top:12px" onclick="S=fresh();save();go('quiz')">Create a new girlfriend</button>
+      <button style="width:100%;margin-top:8px" onclick="go('boot')">Title screen</button>
+    </div>
+  </div>`;
+}
+function renderVictory(){
+  const gf=S.gf;
+  app.innerHTML=`
+  <div class="top"><h1>Victory</h1></div>
+  <div class="screen">
+    <div class="card">
+      <div style="max-width:200px;margin:0 auto 12px">${girlImg(gf,"sexy1")}</div>
+      <h2>You saved her</h2>
+      <p>${esc(gf.name)} is alive. ${esc(S.story?.villain?.name||"The enemy")} has been stopped — for now.</p>
+      <p class="note">${esc(S.story?.causeDetail||"The noble cause survives another day.")}</p>
+      <button class="primary" style="width:100%;margin-top:12px" onclick="S.story=null;S.chapter=0;S.trapsFaced=[];save();go('camp')">Back to camp</button>
+      <button style="width:100%;margin-top:8px" onclick="S=fresh();save();go('quiz')">New game</button>
+    </div>
+  </div>`;
+}
+
+/* ========== SETTINGS ========== */
+function renderSettings(){
+  app.innerHTML=`
+  <div class="top"><button onclick="go(S.gf?'camp':'boot')">←</button><h1>Settings</h1></div>
+  <div class="screen">
+    <div class="card">
+      <div class="label">xAI API key</div>
+      <input id="k" type="password" placeholder="xai-..." value="${esc(apiKey)}">
+      <button class="primary" style="margin-top:8px;width:100%" onclick="apiKey=document.getElementById('k').value.trim();localStorage.setItem('bb-xai-key',apiKey);document.getElementById('sst').textContent='Saved.'">Save</button>
+      <p class="status" id="sst"></p>
+    </div>
+    <div class="card">
+      <div class="label">Upload image for situation</div>
+      <p class="note">Pick a character and a slot, then upload. Icons also work as front view.</p>
+      <select id="sg">${S.party.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join("")}</select>
+      <select id="ss" style="margin-top:8px">${SLOTS.map(s=>`<option value="${s}">${esc(SLOT_LABELS[s]||s)}</option>`).join("")}</select>
+      <input type="file" id="sf" accept="image/*" style="margin-top:8px">
+      <button style="margin-top:8px;width:100%" id="su">Upload</button>
+      <p class="status" id="ust"></p>
+    </div>
+    <div class="card">
+      <div class="label">Villain icon</div>
+      <p class="note">${S.story?.villain?esc(S.story.villain.name)+' — upload a portrait for multi-character scenes.':'Available once a story exists.'}</p>
+      ${imageDB["villain_icon"]?`<img src="${imageDB["villain_icon"]}" style="max-width:120px;border-radius:10px;margin:8px 0">`:""}
+      <input type="file" id="vf" accept="image/*">
+      <button style="margin-top:8px;width:100%" id="vu">Upload villain icon</button>
+      <p class="status" id="vst"></p>
+    </div>
+    <div class="card">
+      <button class="danger" style="width:100%" onclick="if(confirm('Wipe all progress?')){S=fresh();save();go('boot')}">Reset all progress</button>
+    </div>
+  </div>`;
+  document.getElementById("su").onclick=async()=>{
+    const gid=document.getElementById("sg").value;
+    const slot=document.getElementById("ss").value;
+    const f=document.getElementById("sf").files[0];
+    const g=S.party.find(x=>x.id===gid);
+    if(!g||!f){document.getElementById("ust").textContent="Pick character, slot, and file.";return}
+    await storeImg(g,slot,f);
+    document.getElementById("ust").textContent="Uploaded "+(SLOT_LABELS[slot]||slot);
+  };
+  document.getElementById("vu").onclick=async()=>{
+    const f=document.getElementById("vf").files[0];
+    if(!f){document.getElementById("vst").textContent="Pick a file.";return}
+    const url=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+    imageDB["villain_icon"]=url;
+    try{await idbSet("villain_icon",url)}catch(e){}
+    try{localStorage.setItem("bb-img-villain_icon",url)}catch(e){}
+    document.getElementById("vst").textContent="Villain icon saved.";
+    renderSettings();
+  };
+}
+
+/* ========== INIT ========== */
+(async()=>{
+  if(S.gf)await loadImgs(S.gf);
+  for(const g of S.party||[])await loadImgs(g);
+  try{const v=await idbGet("villain_icon");if(v)imageDB["villain_icon"]=v}catch(e){}
+  try{const v=localStorage.getItem("bb-img-villain_icon");if(v)imageDB["villain_icon"]=v}catch(e){}
+  if(!localStorage.getItem("bb-xai-key"))localStorage.setItem("bb-xai-key",BUILTIN_KEY);
+  apiKey=getKey();
+  render();
+})();
+</script>
+</body>
+</html>
